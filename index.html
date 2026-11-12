@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบจัดการรายการหนังสือและการคิดค่าตอบแทน - งานเทคโนโลยีการศึกษา สจล.</title>
+    <title>TextCalc - ระบบจัดเก็บรายการหนังสือและคิดค่าตอบแทน</title>
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
     <!-- โหลด Supabase JS SDK v2 -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -12,9 +12,63 @@
         body { background-color: #f1f5f9; margin: 0; color: #1e293b; }
         
         /* Top Navigation & Auth Bar */
-        .topbar { background: #0f172a; color: #fff; padding: 14px 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
-        .topbar-title { font-size: 17px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
-        .kmitl-tag { background: #e35205; color: #fff; padding: 2px 8px; border-radius: 4px; font-size: 12px; }
+        .topbar { 
+            background: #0f172a; 
+            color: #fff; 
+            padding: 12px 24px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            flex-wrap: wrap; 
+            gap: 14px;
+            border-bottom: 1px solid #1e293b;
+            box-shadow: 0 2px 6px rgba(15, 23, 42, 0.15);
+        }
+        .brand-wrap {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+        .github-logo-box {
+            width: 42px;
+            height: 42px;
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+            flex-shrink: 0;
+            transition: transform 0.2s, background 0.2s;
+        }
+        .github-logo-box:hover {
+            background: #334155;
+            transform: scale(1.03);
+        }
+        .github-logo-box svg {
+            width: 24px;
+            height: 24px;
+            fill: currentColor;
+        }
+        .brand-text {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            line-height: 1.25;
+        }
+        .brand-title {
+            font-size: 19px;
+            font-weight: 700;
+            color: #ffffff;
+            letter-spacing: 0.3px;
+        }
+        .brand-subtitle {
+            font-size: 13px;
+            font-weight: 400;
+            color: #94a3b8;
+            margin-top: 2px;
+        }
         .auth-box { display: flex; align-items: center; gap: 12px; font-size: 14px; }
         .role-badge { background: #1e293b; border: 1px solid #334155; padding: 3px 8px; border-radius: 6px; font-size: 12px; color: #38bdf8; }
 
@@ -48,10 +102,10 @@
         .btn-sm:hover { background: #cbd5e1; }
         .btn { padding: 9px 16px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 14px; transition: 0.15s; }
         .btn:disabled { opacity: 0.6; cursor: not-allowed; }
-        .btn-login { background: #e35205; color: white; width: 100%; padding: 11px; font-size: 15px; }
-        .btn-login:hover:not(:disabled) { background: #c2410c; }
-        .btn-logout { background: transparent; border: 1px solid #94a3b8; color: #fff; padding: 6px 12px; font-size: 13px; }
-        .btn-logout:hover { background: rgba(255,255,255,0.1); }
+        .btn-login { background: #0f172a; color: white; width: 100%; padding: 11px; font-size: 15px; }
+        .btn-login:hover:not(:disabled) { background: #1e293b; }
+        .btn-logout { background: transparent; border: 1px solid #64748b; color: #e2e8f0; padding: 6px 14px; font-size: 13px; }
+        .btn-logout:hover { background: rgba(255,255,255,0.1); border-color: #94a3b8; color: #fff; }
         .btn-save { background: #2563eb; color: white; margin-top: 16px; }
         .btn-save:hover:not(:disabled) { background: #1d4ed8; }
         .btn-update { background: #d97706; color: white; margin-top: 16px; }
@@ -106,9 +160,10 @@
         .modal-bg { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(4px); display: flex; justify-content: center; align-items: center; z-index: 9999; padding: 16px; }
         .modal-box { background: #fff; padding: 30px 28px; border-radius: 12px; width: 100%; max-width: 410px; box-shadow: 0 20px 35px rgba(0,0,0,0.3); }
         .modal-header { text-align: center; margin-bottom: 20px; }
-        .modal-header .kmitl-badge { display: inline-block; background: #e35205; color: #fff; font-weight: 700; padding: 4px 12px; border-radius: 6px; font-size: 13px; margin-bottom: 8px; }
-        .modal-header h3 { margin: 0; font-size: 20px; color: #0f172a; }
-        .modal-header p { margin: 6px 0 0; font-size: 13px; color: #64748b; }
+        .modal-header .modal-logo-icon { display: inline-flex; align-items: center; justify-content: center; width: 48px; height: 48px; background: #0f172a; color: #fff; border-radius: 12px; margin-bottom: 10px; }
+        .modal-header .modal-logo-icon svg { width: 28px; height: 28px; fill: currentColor; }
+        .modal-header h3 { margin: 0; font-size: 21px; color: #0f172a; }
+        .modal-header p { margin: 5px 0 0; font-size: 13px; color: #64748b; }
         .err-box { background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; padding: 8px 12px; border-radius: 6px; font-size: 13px; margin-bottom: 12px; text-align: center; display: none; }
         
         /* Loading Spinner Overlay */
@@ -124,9 +179,13 @@
 <div class="modal-bg" id="loginModal">
     <div class="modal-box">
         <div class="modal-header">
-            <span class="kmitl-badge">KMITL ADMIN</span>
-            <h3>เข้าสู่ระบบจัดการข้อมูล</h3>
-            <p>สำหรับผู้ดูแลระบบด้วยบัญชี <strong>@kmitl.ac.th</strong> เท่านั้น</p>
+            <div class="modal-logo-icon" title="TextCalc">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"></path>
+                </svg>
+            </div>
+            <h3>TextCalc</h3>
+            <p>ระบบจัดเก็บรายการหนังสือและคิดค่าตอบแทน<br>สำหรับผู้ดูแลระบบบัญชี <strong>@kmitl.ac.th</strong> เท่านั้น</p>
         </div>
         <div id="authCheckingMsg" style="text-align:center; padding: 20px 0; color:#475569; font-weight:600;">
             ⏳ กำลังตรวจสอบสิทธิ์การเข้าใช้งาน...
@@ -151,11 +210,18 @@
 <!-- ========================================================================= -->
 <div id="mainApp" class="hidden">
 
-    <!-- แถบสถานะด้านบน -->
+    <!-- แถบสถานะด้านบน: โลโก้ GitHub + ชื่อระบบ 2 แถว + สถานะ Admin -->
     <div class="topbar">
-        <div class="topbar-title">
-            <span class="kmitl-tag">KMITL</span>
-            <span>ระบบจัดเก็บรายการหนังสือและคิดค่าตอบแทน</span>
+        <div class="brand-wrap">
+            <div class="github-logo-box" title="TextCalc">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"></path>
+                </svg>
+            </div>
+            <div class="brand-text">
+                <span class="brand-title">TextCalc</span>
+                <span class="brand-subtitle">ระบบจัดเก็บรายการหนังสือและคิดค่าตอบแทน</span>
+            </div>
         </div>
         <div class="auth-box">
             <span id="roleLabel"></span>
