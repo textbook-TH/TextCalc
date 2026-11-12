@@ -12,6 +12,13 @@
         * { box-sizing: border-box; font-family: 'Sarabun', sans-serif; }
         body { background-color: #f1f5f9; margin: 0; color: #1e293b; }
         
+        /* โครงสร้างหลักให้ Footer ชิดด้านล่างเสมอ */
+        #mainApp {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
         /* Top Navigation & Auth Bar */
         .topbar { 
             background: #0f172a; 
@@ -33,10 +40,7 @@
         .brand-logo-box {
             width: 44px;
             height: 44px;
-            background: #ffffff;
-            border: 1px solid #334155;
-            border-radius: 10px;
-            padding: 4px;
+            border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -45,12 +49,13 @@
             transition: transform 0.2s;
         }
         .brand-logo-box:hover {
-            transform: scale(1.04);
+            transform: scale(1.05);
         }
         .brand-logo-box img {
             width: 100%;
             height: 100%;
-            object-fit: contain;
+            object-fit: cover;
+            border-radius: 50%;
             display: block;
         }
         .brand-text {
@@ -74,8 +79,19 @@
         .auth-box { display: flex; align-items: center; gap: 12px; font-size: 14px; }
         .role-badge { background: #1e293b; border: 1px solid #334155; padding: 3px 8px; border-radius: 6px; font-size: 12px; color: #38bdf8; }
 
-        .container { max-width: 1180px; margin: 24px auto; padding: 0 20px; }
+        .container { max-width: 1180px; width: 100%; margin: 24px auto; padding: 0 20px; flex: 1; }
         
+        /* Footer ด้านล่างเว็บโทนสีเดียวกับ Topbar */
+        .footer {
+            background: #0f172a;
+            color: #94a3b8;
+            text-align: center;
+            padding: 16px 24px;
+            font-size: 13px;
+            border-top: 1px solid #1e293b;
+            margin-top: 24px;
+        }
+
         /* Tabs แยก 3 หน้าการทำงานหลัก */
         .tabs { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
         .tab-btn { padding: 12px 20px; border: 1px solid #cbd5e1; background: #e2e8f0; color: #334155; font-size: 15px; font-weight: 700; border-radius: 8px; cursor: pointer; transition: 0.2s; }
@@ -162,8 +178,8 @@
         .modal-bg { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(4px); display: flex; justify-content: center; align-items: center; z-index: 9999; padding: 16px; }
         .modal-box { background: #fff; padding: 30px 28px; border-radius: 12px; width: 100%; max-width: 410px; box-shadow: 0 20px 35px rgba(0,0,0,0.3); }
         .modal-header { text-align: center; margin-bottom: 20px; }
-        .modal-header .modal-logo-icon { display: inline-flex; align-items: center; justify-content: center; width: 56px; height: 56px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 6px; margin-bottom: 10px; overflow: hidden; }
-        .modal-header .modal-logo-icon img { width: 100%; height: 100%; object-fit: contain; display: block; }
+        .modal-header .modal-logo-icon { display: inline-flex; align-items: center; justify-content: center; width: 58px; height: 58px; border-radius: 50%; margin-bottom: 10px; overflow: hidden; }
+        .modal-header .modal-logo-icon img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; display: block; }
         .modal-header h3 { margin: 0; font-size: 21px; color: #0f172a; }
         .modal-header p { margin: 5px 0 0; font-size: 13px; color: #64748b; }
         .err-box { background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; padding: 8px 12px; border-radius: 6px; font-size: 13px; margin-bottom: 12px; text-align: center; display: none; }
@@ -210,7 +226,7 @@
 <!-- ========================================================================= -->
 <div id="mainApp" class="hidden">
 
-    <!-- แถบสถานะด้านบน: ไฟล์ logo.png + ชื่อระบบ 2 แถว + สถานะ Admin -->
+    <!-- แถบสถานะด้านบน: ไฟล์ logo.png ทรงกลม + ชื่อระบบ 2 แถว + สถานะ Admin -->
     <div class="topbar">
         <div class="brand-wrap">
             <div class="brand-logo-box" title="TextCalc">
@@ -433,6 +449,11 @@
         </div>
 
     </div>
+
+    <!-- แถบ Footer ด้านล่างเว็บโทนสีเดียวกับ Topbar -->
+    <footer class="footer">
+        © 2026 งานเทคโนโลยีการศึกษา คณะวิศวกรรมศาสตร์ สถาบันเทคโนโลยีพระจอมเกล้าเจ้าคุณทหารลาดกระบัง
+    </footer>
 </div>
 
 <script>
