@@ -1,0 +1,1314 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบจัดการรายการหนังสือและการคิดค่าตอบแทน - งานเทคโนโลยีการศึกษา สจล.</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- โหลด Supabase JS SDK v2 -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * { box-sizing: border-box; font-family: 'Sarabun', sans-serif; }
+        body { background-color: #f1f5f9; margin: 0; color: #1e293b; }
+        
+        /* Top Navigation & Auth Bar */
+        .topbar { background: #0f172a; color: #fff; padding: 14px 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+        .topbar-title { font-size: 17px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+        .kmitl-tag { background: #e35205; color: #fff; padding: 2px 8px; border-radius: 4px; font-size: 12px; }
+        .auth-box { display: flex; align-items: center; gap: 12px; font-size: 14px; }
+        .role-badge { background: #1e293b; border: 1px solid #334155; padding: 3px 8px; border-radius: 6px; font-size: 12px; color: #38bdf8; }
+
+        .container { max-width: 1180px; margin: 24px auto; padding: 0 20px; }
+        
+        /* Tabs แยก 3 หน้าการทำงานหลัก */
+        .tabs { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
+        .tab-btn { padding: 12px 20px; border: 1px solid #cbd5e1; background: #e2e8f0; color: #334155; font-size: 15px; font-weight: 700; border-radius: 8px; cursor: pointer; transition: 0.2s; }
+        .tab-btn.active { background: #2563eb; color: #fff; border-color: #2563eb; box-shadow: 0 2px 6px rgba(37,99,235,0.3); }
+
+        .card { background: #fff; padding: 24px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 24px; transition: border 0.2s; }
+        .card.editing-mode { border: 2px solid #f59e0b; background-color: #fffbeb; }
+        .card-header-flex { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; margin-bottom: 14px; flex-wrap: wrap; gap: 10px; }
+        .card-header-flex h2 { border-bottom: none; padding-bottom: 0; margin: 0; }
+        h2 { margin-top: 0; font-size: 20px; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; }
+        h3 { font-size: 16px; color: #334155; margin: 15px 0 10px; }
+        
+        /* Form */
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; }
+        .form-group { display: flex; flex-direction: column; }
+        .full-width { grid-column: 1 / -1; }
+        label { font-weight: bold; font-size: 13px; margin-bottom: 4px; color: #475569; }
+        input, select { padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; background: #fff; }
+        input[readonly] { background-color: #f8fafc; font-weight: bold; color: #0f172a; }
+        
+        /* Filter Bar */
+        .filter-bar { background: #f8fafc; border: 1px solid #cbd5e1; padding: 15px; border-radius: 8px; display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-end; margin-bottom: 16px; }
+
+        /* Action Buttons */
+        .btn-sm { padding: 6px 12px; font-size: 13px; border: none; border-radius: 6px; cursor: pointer; background: #e2e8f0; color: #1e293b; font-weight: 600; transition: 0.15s; }
+        .btn-sm:hover { background: #cbd5e1; }
+        .btn { padding: 9px 16px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 14px; transition: 0.15s; }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .btn-login { background: #e35205; color: white; width: 100%; padding: 11px; font-size: 15px; }
+        .btn-login:hover:not(:disabled) { background: #c2410c; }
+        .btn-logout { background: transparent; border: 1px solid #94a3b8; color: #fff; padding: 6px 12px; font-size: 13px; }
+        .btn-logout:hover { background: rgba(255,255,255,0.1); }
+        .btn-save { background: #2563eb; color: white; margin-top: 16px; }
+        .btn-save:hover:not(:disabled) { background: #1d4ed8; }
+        .btn-update { background: #d97706; color: white; margin-top: 16px; }
+        .btn-update:hover:not(:disabled) { background: #b45309; }
+        .btn-cancel { background: #64748b; color: white; margin-top: 16px; margin-left: 8px; }
+        .btn-cancel:hover:not(:disabled) { background: #475569; }
+        .btn-p02 { background: #059669; color: white; }
+        .btn-p02:hover { background: #047857; }
+        .btn-p03 { background: #d97706; color: white; }
+        .btn-p03:hover { background: #b45309; }
+
+        /* Vector SVG Icon Buttons (ใบเสร็จ, สลิป, แก้ไข, ลบ) */
+        .svg-btn { display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 8px; text-decoration: none; border: 1px solid transparent; cursor: pointer; transition: all 0.18s ease; }
+        .svg-btn svg { width: 18px; height: 18px; stroke-width: 2; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; }
+        .svg-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0,0,0,0.08); }
+        
+        .svg-receipt { background: #eff6ff; color: #2563eb; border-color: #bfdbfe; }
+        .svg-receipt:hover { background: #2563eb; color: #ffffff; border-color: #2563eb; }
+        
+        .svg-slip { background: #ecfdf5; color: #059669; border-color: #a7f3d0; }
+        .svg-slip:hover { background: #059669; color: #ffffff; border-color: #059669; }
+
+        .svg-edit { background: #fef3c7; color: #d97706; border-color: #fde68a; }
+        .svg-edit:hover { background: #d97706; color: #ffffff; border-color: #d97706; }
+
+        .svg-del { background: #fef2f2; color: #dc2626; border-color: #fecaca; }
+        .svg-del:hover { background: #dc2626; color: #ffffff; border-color: #dc2626; }
+
+        .action-group { display: flex; gap: 6px; justify-content: center; align-items: center; }
+
+        /* Pagination Controls */
+        .pagination-bar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; margin-top: 16px; gap: 10px; padding-top: 12px; border-top: 1px solid #e2e8f0; }
+        .page-info { font-size: 13px; color: #64748b; font-weight: 600; }
+        .page-btns { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+        .page-btn { padding: 6px 12px; border: 1px solid #cbd5e1; background: #fff; color: #334155; border-radius: 6px; font-size: 13px; font-weight: 700; cursor: pointer; transition: 0.15s; }
+        .page-btn:hover:not(:disabled) { background: #f1f5f9; border-color: #94a3b8; }
+        .page-btn.active { background: #2563eb; color: #fff; border-color: #2563eb; }
+        .page-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+        /* Main Table */
+        .table-wrap { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+        th, td { border: 1px solid #cbd5e1; padding: 10px; font-size: 14px; }
+        th { background: #f8fafc; text-align: center; }
+        .text-center { text-align: center; }
+        .text-right { text-align: right; }
+        .badge { padding: 3px 8px; border-radius: 12px; font-size: 12px; font-weight: bold; }
+        .paid { background: #dcfce7; color: #166534; }
+        .pending { background: #fef9c3; color: #854d0e; }
+
+        /* Modal Login บังคับกลางจอตั้งแต่เปิดหน้าเว็บ */
+        .modal-bg { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(4px); display: flex; justify-content: center; align-items: center; z-index: 9999; padding: 16px; }
+        .modal-box { background: #fff; padding: 30px 28px; border-radius: 12px; width: 100%; max-width: 410px; box-shadow: 0 20px 35px rgba(0,0,0,0.3); }
+        .modal-header { text-align: center; margin-bottom: 20px; }
+        .modal-header .kmitl-badge { display: inline-block; background: #e35205; color: #fff; font-weight: 700; padding: 4px 12px; border-radius: 6px; font-size: 13px; margin-bottom: 8px; }
+        .modal-header h3 { margin: 0; font-size: 20px; color: #0f172a; }
+        .modal-header p { margin: 6px 0 0; font-size: 13px; color: #64748b; }
+        .err-box { background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; padding: 8px 12px; border-radius: 6px; font-size: 13px; margin-bottom: 12px; text-align: center; display: none; }
+        
+        /* Loading Spinner Overlay */
+        .loading-text { color: #2563eb; font-weight: 600; font-size: 14px; }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+<!-- ========================================================================= -->
+<!-- 1. ป๊อปอัป Login บังคับตรงกลางหน้าจอ ก่อนเข้าใช้งานระบบทั้งหมด               -->
+<!-- ========================================================================= -->
+<div class="modal-bg" id="loginModal">
+    <div class="modal-box">
+        <div class="modal-header">
+            <span class="kmitl-badge">KMITL ADMIN</span>
+            <h3>เข้าสู่ระบบจัดการข้อมูล</h3>
+            <p>สำหรับผู้ดูแลระบบด้วยบัญชี <strong>@kmitl.ac.th</strong> เท่านั้น</p>
+        </div>
+        <div id="authCheckingMsg" style="text-align:center; padding: 20px 0; color:#475569; font-weight:600;">
+            ⏳ กำลังตรวจสอบสิทธิ์การเข้าใช้งาน...
+        </div>
+        <form id="loginForm" class="hidden" onsubmit="doLogin(event)">
+            <div class="form-group" style="margin-bottom: 14px;">
+                <label>อีเมลสถาบัน (@kmitl.ac.th)</label>
+                <input type="email" id="emailInput" required placeholder="admin@kmitl.ac.th" autofocus>
+            </div>
+            <div class="form-group" style="margin-bottom: 16px;">
+                <label>รหัสผ่าน</label>
+                <input type="password" id="passInput" required placeholder="กรอกรหัสผ่าน">
+            </div>
+            <div id="loginErr" class="err-box"></div>
+            <button type="submit" id="loginSubmitBtn" class="btn btn-login">🔐 เข้าสู่ระบบ</button>
+        </form>
+    </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- 2. พื้นที่ระบบหลัก (ซ่อนไว้จนกว่าจะ Login และยืนยันสิทธิ์ Admin สำเร็จ)     -->
+<!-- ========================================================================= -->
+<div id="mainApp" class="hidden">
+
+    <!-- แถบสถานะด้านบน -->
+    <div class="topbar">
+        <div class="topbar-title">
+            <span class="kmitl-tag">KMITL</span>
+            <span>ระบบจัดเก็บรายการหนังสือและคิดค่าตอบแทน</span>
+        </div>
+        <div class="auth-box">
+            <span id="roleLabel"></span>
+            <button id="logoutBtn" class="btn btn-logout" onclick="logout()">ออกจากระบบ</button>
+        </div>
+    </div>
+
+    <div class="container">
+
+        <!-- แถบเมนู 3 หน้าหลัก -->
+        <div class="tabs">
+            <button class="tab-btn active" id="tab1" onclick="switchTab(1)">📝 กรอกข้อมูลรายการ</button>
+            <button class="tab-btn" id="tab2" onclick="switchTab(2)">📋 สรุปรายการหนังสือ/ตำราเรียน</button>
+            <button class="tab-btn" id="tab3" onclick="switchTab(3)">💰 สรุปค่าตอบแทนอาจารย์</button>
+        </div>
+
+        <!-- ===================================================================== -->
+        <!-- หน้า 1: หน้าหลัก (ส่วน 1: กรอก/แก้ไขข้อมูล + ส่วน 2: รายการบันทึก & จัดการ) -->
+        <!-- ===================================================================== -->
+        <div id="view1">
+            <!-- ส่วนที่ 1: บันทึก/แก้ไขรายการหนังสือ/ตำราเรียน -->
+            <div class="card" id="formCard">
+                <h2 id="formHeading">🗂️ ส่วนที่ 1: บันทึกรายการหนังสือ/ตำราเรียน</h2>
+                <form id="bookForm" onsubmit="saveBook(event)">
+                    <input type="hidden" id="editId" value="">
+                    <div class="form-grid">
+                        <div class="form-group full-width">
+                            <label>รายการหนังสือ/ตำราเรียน *</label>
+                            <input type="text" id="title" required placeholder="พิมพ์รายชื่อหนังสือ/ตำราเรียน...">
+                        </div>
+                        <div class="form-group">
+                            <label>ชื่อผู้แต่ง *</label>
+                            <input type="text" id="author" required placeholder="พิมพ์ชื่อผู้แต่ง...">
+                        </div>
+                        <div class="form-group">
+                            <label>จำนวน (เล่ม) *</label>
+                            <input type="number" id="qty" value="" min="1" placeholder="พิมพ์จำนวน..." oninput="calcForm()" required>
+                        </div>
+                        <div class="form-group">
+                            <label>ราคาต่อเล่ม (บาท) *</label>
+                            <input type="number" id="price" step="0.01" min="0" value="0.00" oninput="calcForm()" required>
+                        </div>
+                        <div class="form-group">
+                            <label>จำนวนเงินรวม *</label>
+                            <input type="text" id="totalDisplay" readonly value="0.00">
+                        </div>
+                        <div class="form-group">
+                            <label>สถานะการโอนเงิน *</label>
+                            <select id="status">
+                                <option value="Paid">Paid</option>
+                                <option value="Pending">Pending</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>เลขที่ใบเสร็จรับเงิน</label>
+                            <input type="text" id="receiptNo" placeholder="เช่น 8874/22">
+                        </div>
+                        <div class="form-group">
+                            <label>วันที่โอนเงิน *</label>
+                            <input type="date" id="transferDate" required>
+                        </div>
+                    </div>
+
+                    <!-- ช่องกรอกลิงก์ Google Drive: 1 ใบเสร็จรับเงิน และ 1 สลิปการโอนเงิน -->
+                    <div class="form-grid" style="margin-top: 14px;">
+                        <div class="form-group">
+                            <label>ลิงก์ "ใบเสร็จรับเงิน"</label>
+                            <input type="url" id="receiptLink" placeholder="https://drive.google.com/...">
+                        </div>
+                        <div class="form-group">
+                            <label>ลิงก์ "สลิปการโอนเงิน"</label>
+                            <input type="url" id="slipLink" placeholder="https://drive.google.com/...">
+                        </div>
+                    </div>
+
+                    <div>
+                        <button type="submit" id="submitBtn" class="btn btn-save">💾 บันทึกรายการหนังสือเข้าระบบ</button>
+                        <button type="button" id="cancelEditBtn" class="btn btn-cancel hidden" onclick="cancelEdit()">✖ ยกเลิกการแก้ไข</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- ส่วนที่ 2: รายการบันทึก (เรียงลำดับจากมากไปหาน้อย + แสดงหน้าละ 30 รายการ + คอลัมน์ จัดการ) -->
+            <div class="card">
+                <div class="card-header-flex">
+                    <h2>🗂️ ส่วนที่ 2: รายการบันทึกข้อมูลและหลักฐาน</h2>
+                    <button type="button" class="btn-sm" onclick="fetchBooksFromDB(true)">🔄 รีเฟรชข้อมูล</button>
+                </div>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th width="7%">ลำดับ</th>
+                                <th width="34%">รายการหนังสือ/ตำราเรียน</th>
+                                <th width="10%">สถานะ</th>
+                                <th width="12%">เลขที่ใบเสร็จ</th>
+                                <th width="11%">วันที่โอน</th>
+                                <th width="8%">ใบเสร็จ</th>
+                                <th width="8%">สลิป</th>
+                                <th width="10%">จัดการ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbodySaved"></tbody>
+                    </table>
+                </div>
+
+                <!-- แถบเลือกหน้า (Pagination) -->
+                <div class="pagination-bar" id="paginationBar">
+                    <div class="page-info" id="pageInfo"></div>
+                    <div class="page-btns" id="pageBtns"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===================================================================== -->
+        <!-- หน้า 2: หน้ารายการหนังสือ (แถบแยกสำหรับกรองปฏิทิน & พิมพ์ใบรายการ 03)      -->
+        <!-- ===================================================================== -->
+        <div id="view2" class="hidden">
+            <div class="card">
+                <h2>📋 รายการหนังสือ/ตำราเรียน</h2>
+                
+                <div class="filter-bar">
+                    <div class="form-group">
+                        <label>ตั้งแต่วันที่</label>
+                        <input type="date" id="startDate1" onchange="syncDates(1)">
+                    </div>
+                    <div class="form-group">
+                        <label>ถึงวันที่</label>
+                        <input type="date" id="endDate1" onchange="syncDates(1)">
+                    </div>
+                    <button type="button" class="btn-sm" style="height: 36px;" onclick="clearDates()">แสดงทั้งหมด</button>
+                    <div style="margin-left: auto;">
+                        <button type="button" class="btn btn-p03" onclick="printDoc03()">🖨️ สรุปรายการ</button>
+                    </div>
+                </div>
+
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th width="6%">ลำดับ</th>
+                                <th width="36%">รายการหนังสือ/ตำราเรียน</th>
+                                <th width="18%">ชื่อผู้แต่ง</th>
+                                <th width="9%">สถานะ</th>
+                                <th width="11%">เลขที่ใบเสร็จ</th>
+                                <th width="10%">วันที่โอน</th>
+                                <th width="10%">จำนวนเงิน</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbodyBookList"></tbody>
+                    </table>
+                </div>
+
+                <!-- แถบเลือกหน้า (Pagination) หน้า 2 -->
+                <div class="pagination-bar" id="paginationBar2">
+                    <div class="page-info" id="pageInfo2"></div>
+                    <div class="page-btns" id="pageBtns2"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===================================================================== -->
+        <!-- หน้า 3: คิดค่าตอบแทน 30% (ดึงข้อมูล & พิมพ์ใบค่าตอบแทน 02)               -->
+        <!-- ===================================================================== -->
+        <div id="view3" class="hidden">
+            <div class="card">
+                <h2>💰 คิดค่าตอบแทน (30%)</h2>
+                
+                <div class="filter-bar">
+                    <div class="form-group">
+                        <label>ตั้งแต่วันที่</label>
+                        <input type="date" id="startDate2" onchange="syncDates(2)">
+                    </div>
+                    <div class="form-group">
+                        <label>ถึงวันที่</label>
+                        <input type="date" id="endDate2" onchange="syncDates(2)">
+                    </div>
+                    <div class="form-group" style="width: 120px;">
+                        <label>ร้อยละ (%)</label>
+                        <input type="number" id="percentInput" value="30" min="0" max="100" oninput="renderAll()">
+                    </div>
+                    <button type="button" class="btn-sm" style="height: 36px;" onclick="clearDates()">แสดงทั้งหมด</button>
+                    <div style="margin-left: auto;">
+                        <button type="button" class="btn btn-p02" onclick="printDoc02()">🖨️ สรุปค่าตอบแทน</button>
+                    </div>
+                </div>
+
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th width="5%">ลำดับ</th>
+                                <th width="32%">รายชื่อหนังสือ/ตำราเรียน</th>
+                                <th width="20%">ชื่อผู้แต่ง</th>
+                                <th width="8%">จำนวน (เล่ม)</th>
+                                <th width="10%">ราคา</th>
+                                <th width="12%">จำนวนเงิน</th>
+                                <th width="13%">ค่าตอบแทน<br>(<span id="pctLabel">30</span>%)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbodyComp"></tbody>
+                    </table>
+                </div>
+
+                <!-- แถบเลือกหน้า (Pagination) หน้า 3 -->
+                <div class="pagination-bar" id="paginationBar3">
+                    <div class="page-info" id="pageInfo3"></div>
+                    <div class="page-btns" id="pageBtns3"></div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    // =========================================================================
+    // 0. ตั้งค่าการเชื่อมต่อ Supabase Client
+    // =========================================================================
+    const SUPABASE_URL = 'https://iaqtzbkjpbwrwwgabnzy.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_2qwJoqjcloS9DMv36lN72A_2FQbfFVE';
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // ตัวแปรเก็บข้อมูลโปรไฟล์ผู้ดูแลระบบที่ล็อกอินสำเร็จ
+    let currentAdmin = null;
+    let isLoadingData = false;
+
+    // =========================================================================
+    // 1. ระบบ Login และตรวจสอบสิทธิ์ Admin จากตาราง profiles
+    // =========================================================================
+    function showLoginError(msg) {
+        const errEl = document.getElementById('loginErr');
+        errEl.innerText = msg;
+        errEl.style.display = 'block';
+    }
+
+    function hideLoginError() {
+        const errEl = document.getElementById('loginErr');
+        errEl.innerText = '';
+        errEl.style.display = 'none';
+    }
+
+    // ตรวจสอบสิทธิ์จากตาราง public.profiles (ต้องมี role เป็น admin/super_admin และ isActive = true)
+    async function verifyAdminProfile(user) {
+        if (!user || !user.email || !user.email.toLowerCase().endsWith('@kmitl.ac.th')) {
+            await supabaseClient.auth.signOut();
+            throw new Error('❌ อนุญาตเฉพาะบัญชี @kmitl.ac.th เท่านั้น');
+        }
+
+        const { data: profile, error } = await supabaseClient
+            .from('profiles')
+            .select('id, email, fullName, department, role, isActive')
+            .eq('id', user.id)
+            .single();
+
+        if (error || !profile) {
+            await supabaseClient.auth.signOut();
+            throw new Error('❌ ไม่พบข้อมูลบัญชีผู้ดูแลระบบในฐานข้อมูล (profiles)');
+        }
+
+        if (profile.isActive !== true) {
+            await supabaseClient.auth.signOut();
+            throw new Error('❌ บัญชีของท่านถูกระงับการใช้งาน (isActive = false)');
+        }
+
+        const allowedRoles = ['admin', 'super_admin'];
+        if (!allowedRoles.includes((profile.role || '').toLowerCase())) {
+            await supabaseClient.auth.signOut();
+            throw new Error('❌ บัญชีของท่านไม่มีสิทธิ์ผู้ดูแลระบบ (Admin Only)');
+        }
+
+        return profile;
+    }
+
+    // เปิดหน้าจอระบบหลักเมื่อยืนยันสิทธิ์สำเร็จ
+    async function enterMainApp(profile) {
+        currentAdmin = profile;
+        hideLoginError();
+        document.getElementById('loginModal').style.display = 'none';
+        document.getElementById('mainApp').classList.remove('hidden');
+
+        const displayName = profile.fullName ? `${profile.fullName} (${profile.email})` : profile.email;
+        const roleTag = (profile.role || 'admin').toUpperCase();
+        document.getElementById('roleLabel').innerHTML = `✅ <strong>${displayName}</strong> <span class="role-badge">${roleTag}</span>`;
+
+        await fetchBooksFromDB();
+    }
+
+    // ตรวจสอบ Session ค้างเมื่อโหลดหน้าเว็บ
+    async function initAuthSession() {
+        const checkingMsg = document.getElementById('authCheckingMsg');
+        const loginForm = document.getElementById('loginForm');
+
+        try {
+            const { data: { session }, error } = await supabaseClient.auth.getSession();
+            if (error) throw error;
+
+            if (session && session.user) {
+                const profile = await verifyAdminProfile(session.user);
+                await enterMainApp(profile);
+                return;
+            }
+        } catch (err) {
+            console.warn('Session check notice:', err.message);
+            showLoginError(err.message);
+        }
+
+        checkingMsg.classList.add('hidden');
+        loginForm.classList.remove('hidden');
+    }
+
+    // ฟังก์ชันเข้าสู่ระบบเมื่อกดปุ่ม Login
+    async function doLogin(e) {
+        e.preventDefault();
+        hideLoginError();
+
+        const email = document.getElementById('emailInput').value.trim().toLowerCase();
+        const password = document.getElementById('passInput').value;
+        const submitBtn = document.getElementById('loginSubmitBtn');
+
+        if (!email.endsWith('@kmitl.ac.th')) {
+            showLoginError('❌ อนุญาตเฉพาะบัญชี @kmitl.ac.th เท่านั้น');
+            return;
+        }
+
+        submitBtn.disabled = true;
+        submitBtn.innerText = '⏳ กำลังตรวจสอบสิทธิ์...';
+
+        try {
+            const { data, error } = await supabaseClient.auth.signInWithPassword({
+                email: email,
+                password: password
+            });
+
+            if (error) {
+                throw new Error('❌ อีเมลหรือรหัสผ่านไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง');
+            }
+
+            const profile = await verifyAdminProfile(data.user);
+            await enterMainApp(profile);
+        } catch (err) {
+            showLoginError(err.message || '❌ เกิดข้อผิดพลาดในการเข้าสู่ระบบ');
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerText = '🔐 เข้าสู่ระบบ';
+        }
+    }
+
+    // ออกจากระบบ
+    async function logout() {
+        await supabaseClient.auth.signOut();
+        currentAdmin = null;
+        books = [];
+        cancelEdit();
+        document.getElementById('emailInput').value = '';
+        document.getElementById('passInput').value = '';
+        hideLoginError();
+        document.getElementById('authCheckingMsg').classList.add('hidden');
+        document.getElementById('loginForm').classList.remove('hidden');
+        document.getElementById('mainApp').classList.add('hidden');
+        document.getElementById('loginModal').style.display = 'flex';
+    }
+
+    // =========================================================================
+    // 2. รายการข้อมูลหนังสือ/ตำราเรียน (ดึงจากตาราง book_compensations)
+    // =========================================================================
+    let books = [];
+
+    // ตัวแปรควบคุมการแบ่งหน้า (Pagination): แสดงหน้าละ 30 รายการ เรียงจากมากไปหาน้อยทั้ง 3 หน้า
+    let currentPage = 1;
+    let currentPage2 = 1;
+    let currentPage3 = 1;
+    const rowsPerPage = 30;
+    const rowsPerPage2 = 30;
+    const rowsPerPage3 = 30;
+
+    // ดึงข้อมูลทั้งหมดจาก Supabase ตาราง book_compensations
+    async function fetchBooksFromDB(showToast = false) {
+        if (!currentAdmin) return;
+        isLoadingData = true;
+        renderLoadingState();
+
+        try {
+            const { data, error } = await supabaseClient
+                .from('book_compensations')
+                .select('id, title, author, qty, price, total, status, receiptNo, transferDate, receiptLink, slipLink, createdBy, createdAt')
+                .order('id', { ascending: true });
+
+            if (error) throw error;
+
+            // แปลงชนิดข้อมูล numeric ให้เป็น Number เพื่อความแม่นยำในการคำนวณ
+            books = (data || []).map(row => ({
+                ...row,
+                qty: Number(row.qty) || 0,
+                price: Number(row.price) || 0,
+                total: row.total !== null && row.total !== undefined
+                    ? Number(row.total)
+                    : (Number(row.qty) || 0) * (Number(row.price) || 0)
+            }));
+
+            isLoadingData = false;
+            renderAll();
+
+            if (showToast) {
+                alert(`ซิงก์ข้อมูลล่าสุดสำเร็จ (ทั้งหมด ${books.length} รายการ)`);
+            }
+        } catch (err) {
+            isLoadingData = false;
+            console.error('Error fetching books:', err);
+            alert('❌ ไม่สามารถดึงข้อมูลจากฐานข้อมูลได้: ' + err.message);
+            renderAll();
+        }
+    }
+
+    function renderLoadingState() {
+        const loadingRow = (cols) => `<tr><td colspan="${cols}" class="text-center loading-text" style="padding:20px;">⏳ กำลังโหลดข้อมูลจากฐานข้อมูล Supabase...</td></tr>`;
+        document.getElementById('tbodySaved').innerHTML = loadingRow(8);
+        document.getElementById('tbodyBookList').innerHTML = loadingRow(7);
+        document.getElementById('tbodyComp').innerHTML = loadingRow(7);
+    }
+
+    // ไอคอน SVG คมชัดสำหรับ ใบเสร็จ, สลิป, แก้ไข และ ลบ
+    const SVG_RECEIPT_ICON = `
+        <svg viewBox="0 0 24 24">
+            <path d="M4 2v20l3-2 3 2 2-2 2 2 3-2 3 2V2l-3 2-3-2-2 2-2-2-3 2-3-2z"></path>
+            <line x1="8" y1="8" x2="16" y2="8"></line>
+            <line x1="8" y1="12" x2="16" y2="12"></line>
+            <line x1="8" y1="16" x2="12" y2="16"></line>
+        </svg>`;
+
+    const SVG_SLIP_ICON = `
+        <svg viewBox="0 0 24 24">
+            <rect x="3" y="5" width="18" height="14" rx="2" ry="2"></rect>
+            <polyline points="8 12 11 15 16 9"></polyline>
+        </svg>`;
+
+    const SVG_EDIT_ICON = `
+        <svg viewBox="0 0 24 24">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+        </svg>`;
+
+    const SVG_DEL_ICON = `
+        <svg viewBox="0 0 24 24">
+            <polyline points="3 6 5 6 21 6"></polyline>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            <line x1="10" y1="11" x2="10" y2="17"></line>
+            <line x1="14" y1="11" x2="14" y2="17"></line>
+        </svg>`;
+
+    // =========================================================================
+    // 3. การสลับหน้า 3 แท็บ, ฟอร์มบันทึก/แก้ไข (INSERT / UPDATE) และตัวกรองปฏิทิน
+    // =========================================================================
+    function switchTab(num) {
+        [1, 2, 3].forEach(i => {
+            document.getElementById(`tab${i}`).classList.toggle('active', num === i);
+            document.getElementById(`view${i}`).classList.toggle('hidden', num !== i);
+        });
+        renderAll();
+    }
+
+    function calcForm() {
+        const q = parseFloat(document.getElementById('qty').value) || 0;
+        const p = parseFloat(document.getElementById('price').value) || 0;
+        document.getElementById('totalDisplay').value = formatNum(q * p);
+    }
+
+    async function saveBook(e) {
+        e.preventDefault();
+        if (!currentAdmin) return;
+
+        const q = parseInt(document.getElementById('qty').value, 10) || 0;
+        const p = parseFloat(document.getElementById('price').value) || 0;
+        const editIdVal = document.getElementById('editId').value;
+        const submitBtn = document.getElementById('submitBtn');
+
+        // หมายเหตุ: ไม่ส่งคอลัมน์ total เพราะใน PostgreSQL กำหนดเป็น GENERATED ALWAYS AS (qty * price)
+        const payload = {
+            title: document.getElementById('title').value.trim(),
+            author: document.getElementById('author').value.trim(),
+            qty: q,
+            price: p,
+            status: document.getElementById('status').value,
+            receiptNo: document.getElementById('receiptNo').value.trim() || null,
+            transferDate: document.getElementById('transferDate').value,
+            receiptLink: document.getElementById('receiptLink').value.trim() || null,
+            slipLink: document.getElementById('slipLink').value.trim() || null
+        };
+
+        submitBtn.disabled = true;
+        const originalBtnText = submitBtn.innerText;
+        submitBtn.innerText = '⏳ กำลังบันทึกข้อมูล...';
+
+        try {
+            if (editIdVal) {
+                // โหมดอัปเดตข้อมูลรายการเดิม (UPDATE)
+                const { error } = await supabaseClient
+                    .from('book_compensations')
+                    .update(payload)
+                    .eq('id', Number(editIdVal));
+
+                if (error) throw error;
+
+                cancelEdit();
+                await fetchBooksFromDB();
+                alert('✅ อัปเดตแก้ไขข้อมูลลงฐานข้อมูลเรียบร้อยแล้ว!');
+            } else {
+                // โหมดเพิ่มรายการใหม่ (INSERT) พร้อมระบุรหัสแอดมินผู้บันทึก (createdBy)
+                payload.createdBy = currentAdmin.id;
+
+                const { error } = await supabaseClient
+                    .from('book_compensations')
+                    .insert([payload]);
+
+                if (error) throw error;
+
+                document.getElementById('bookForm').reset();
+                calcForm();
+                currentPage = 1;
+                await fetchBooksFromDB();
+                alert('✅ บันทึกรายการหนังสือลงฐานข้อมูลเรียบร้อยแล้ว!');
+            }
+        } catch (err) {
+            console.error('Error saving book:', err);
+            alert('❌ บันทึกข้อมูลไม่สำเร็จ: ' + err.message);
+        } finally {
+            submitBtn.disabled = false;
+            if (!document.getElementById('editId').value) {
+                submitBtn.innerText = '💾 บันทึกรายการหนังสือเข้าระบบ';
+            } else {
+                submitBtn.innerText = originalBtnText;
+            }
+        }
+    }
+
+    function editBook(id) {
+        const item = books.find(b => b.id === id);
+        if (!item) return;
+
+        document.getElementById('editId').value = item.id;
+        document.getElementById('title').value = item.title;
+        document.getElementById('author').value = item.author;
+        document.getElementById('qty').value = item.qty;
+        document.getElementById('price').value = item.price;
+        document.getElementById('status').value = item.status;
+        document.getElementById('receiptNo').value = item.receiptNo || '';
+        document.getElementById('transferDate').value = item.transferDate || '';
+        document.getElementById('receiptLink').value = item.receiptLink || '';
+        document.getElementById('slipLink').value = item.slipLink || '';
+        calcForm();
+
+        // ปรับหน้าตาฟอร์มเข้าสู่โหมดแก้ไข
+        document.getElementById('formCard').classList.add('editing-mode');
+        document.getElementById('formHeading').innerText = '✏️ แก้ไขรายการหนังสือ/ตำราเรียน';
+        const submitBtn = document.getElementById('submitBtn');
+        submitBtn.innerText = '✅ บันทึกการแก้ไข';
+        submitBtn.className = 'btn btn-update';
+        document.getElementById('cancelEditBtn').classList.remove('hidden');
+
+        // เลื่อนหน้าจอขึ้นไปที่ฟอร์มด้านบนสุดอย่างนุ่มนวล
+        document.getElementById('formCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function cancelEdit() {
+        document.getElementById('editId').value = '';
+        document.getElementById('bookForm').reset();
+        calcForm();
+
+        document.getElementById('formCard').classList.remove('editing-mode');
+        document.getElementById('formHeading').innerText = '🗂️ ส่วนที่ 1: บันทึกรายการหนังสือ/ตำราเรียน';
+        const submitBtn = document.getElementById('submitBtn');
+        submitBtn.innerText = '💾 บันทึกรายการหนังสือเข้าระบบ';
+        submitBtn.className = 'btn btn-save';
+        document.getElementById('cancelEditBtn').classList.add('hidden');
+    }
+
+    async function delBook(id) {
+        if (!currentAdmin) return;
+        if (!confirm('ยืนยันการลบรายการนี้ออกจากฐานข้อมูลอย่างถาวร?')) return;
+
+        try {
+            const { error } = await supabaseClient
+                .from('book_compensations')
+                .delete()
+                .eq('id', id);
+
+            if (error) throw error;
+
+            if (document.getElementById('editId').value == id) {
+                cancelEdit();
+            }
+
+            await fetchBooksFromDB();
+            const totalPages = Math.max(1, Math.ceil(books.length / rowsPerPage));
+            if (currentPage > totalPages) {
+                currentPage = totalPages;
+                renderSavedTable();
+            }
+        } catch (err) {
+            console.error('Error deleting book:', err);
+            alert('❌ ลบข้อมูลไม่สำเร็จ: ' + err.message);
+        }
+    }
+
+    function goToPage(page) {
+        currentPage = page;
+        renderSavedTable();
+    }
+
+    function goToPage2(page) {
+        currentPage2 = page;
+        renderAll();
+    }
+
+    function goToPage3(page) {
+        currentPage3 = page;
+        renderAll();
+    }
+
+    function buildPaginationUI(infoEl, btnsEl, itemsList, currPage, perPage, fnName) {
+        const totalItems = itemsList.length;
+        if (totalItems === 0) {
+            infoEl.innerText = '';
+            btnsEl.innerHTML = '';
+            return;
+        }
+        const totalPages = Math.ceil(totalItems / perPage);
+        const startIdx = (currPage - 1) * perPage;
+        const endIdx = Math.min(startIdx + perPage, totalItems);
+        infoEl.innerText = `แสดงลำดับที่ ${itemsList[startIdx].seqNo} ถึง ${itemsList[endIdx - 1].seqNo} (จากทั้งหมด ${totalItems} รายการ | หน้า ${currPage}/${totalPages})`;
+
+        let btnsHtml = `<button type="button" class="page-btn" onclick="${fnName}(${currPage - 1})" ${currPage === 1 ? 'disabled' : ''}>« ก่อนหน้า</button>`;
+        for (let p = 1; p <= totalPages; p++) {
+            btnsHtml += `<button type="button" class="page-btn ${p === currPage ? 'active' : ''}" onclick="${fnName}(${p})">${p}</button>`;
+        }
+        btnsHtml += `<button type="button" class="page-btn" onclick="${fnName}(${currPage + 1})" ${currPage === totalPages ? 'disabled' : ''}>ถัดไป »</button>`;
+        btnsEl.innerHTML = btnsHtml;
+    }
+
+    function syncDates(source) {
+        if (source === 1) {
+            document.getElementById('startDate2').value = document.getElementById('startDate1').value;
+            document.getElementById('endDate2').value = document.getElementById('endDate1').value;
+        } else {
+            document.getElementById('startDate1').value = document.getElementById('startDate2').value;
+            document.getElementById('endDate1').value = document.getElementById('endDate2').value;
+        }
+        currentPage2 = 1;
+        currentPage3 = 1;
+        renderAll();
+    }
+
+    function clearDates() {
+        document.getElementById('startDate1').value = '';
+        document.getElementById('endDate1').value = '';
+        document.getElementById('startDate2').value = '';
+        document.getElementById('endDate2').value = '';
+        currentPage2 = 1;
+        currentPage3 = 1;
+        renderAll();
+    }
+
+    function getFilteredBooks() {
+        const s = document.getElementById('startDate1').value;
+        const e = document.getElementById('endDate1').value;
+        return books
+            .map((b, idx) => ({ ...b, seqNo: idx + 1 }))
+            .filter(b => {
+                if (s && b.transferDate < s) return false;
+                if (e && b.transferDate > e) return false;
+                return true;
+            })
+            .reverse();
+    }
+
+    // ฟังก์ชันสร้างตารางส่วนที่ 2 (เรียงลำดับจากมากไปหาน้อย + หน้าละ 30 รายการ + คอลัมน์จัดการ แก้ไข/ลบ)
+    function renderSavedTable() {
+        if (isLoadingData) return;
+        const tbodySaved = document.getElementById('tbodySaved');
+        const pageInfo = document.getElementById('pageInfo');
+        const pageBtns = document.getElementById('pageBtns');
+        tbodySaved.innerHTML = '';
+
+        const totalItems = books.length;
+        if (totalItems === 0) {
+            tbodySaved.innerHTML = `<tr><td colspan="8" class="text-center" style="color:#64748b;">ยังไม่มีข้อมูลที่บันทึกในระบบ</td></tr>`;
+            pageInfo.innerText = '';
+            pageBtns.innerHTML = '';
+            return;
+        }
+
+        const descList = books
+            .map((item, idx) => ({ ...item, seqNo: idx + 1 }))
+            .reverse();
+
+        const totalPages = Math.ceil(totalItems / rowsPerPage);
+        if (currentPage > totalPages) currentPage = totalPages;
+        if (currentPage < 1) currentPage = 1;
+
+        const startIdx = (currentPage - 1) * rowsPerPage;
+        const endIdx = Math.min(startIdx + rowsPerPage, totalItems);
+        const pageItems = descList.slice(startIdx, endIdx);
+
+        pageItems.forEach((b) => {
+            const receiptCell = b.receiptLink
+                ? `<a href="${b.receiptLink}" target="_blank" rel="noopener noreferrer" class="svg-btn svg-receipt" title="ดาวน์โหลดใบเสร็จรับเงิน">${SVG_RECEIPT_ICON}</a>`
+                : `<span style="color:#94a3b8;">-</span>`;
+
+            const slipCell = b.slipLink
+                ? `<a href="${b.slipLink}" target="_blank" rel="noopener noreferrer" class="svg-btn svg-slip" title="ดาวน์โหลดสลิปการโอนเงิน">${SVG_SLIP_ICON}</a>`
+                : `<span style="color:#94a3b8;">-</span>`;
+
+            const actionCell = `
+                <div class="action-group">
+                    <button type="button" class="svg-btn svg-edit" title="แก้ไขรายการ" onclick="editBook(${b.id})">${SVG_EDIT_ICON}</button>
+                    <button type="button" class="svg-btn svg-del" title="ลบรายการ" onclick="delBook(${b.id})">${SVG_DEL_ICON}</button>
+                </div>
+            `;
+
+            tbodySaved.innerHTML += `
+                <tr>
+                    <td class="text-center"><strong>${b.seqNo}</strong></td>
+                    <td><strong>${escapeHtml(b.title)}</strong></td>
+                    <td class="text-center"><span class="badge ${b.status === 'Paid' ? 'paid' : 'pending'}">${b.status}</span></td>
+                    <td class="text-center">${escapeHtml(b.receiptNo || '-')}</td>
+                    <td class="text-center">${formatThaiDate(b.transferDate)}</td>
+                    <td class="text-center">${receiptCell}</td>
+                    <td class="text-center">${slipCell}</td>
+                    <td class="text-center">${actionCell}</td>
+                </tr>
+            `;
+        });
+
+        pageInfo.innerText = `แสดงลำดับที่ ${descList[startIdx].seqNo} ถึง ${descList[endIdx - 1].seqNo} (จากทั้งหมด ${totalItems} รายการ | หน้า ${currentPage}/${totalPages})`;
+
+        let btnsHtml = `<button type="button" class="page-btn" onclick="goToPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>« ก่อนหน้า</button>`;
+        for (let p = 1; p <= totalPages; p++) {
+            btnsHtml += `<button type="button" class="page-btn ${p === currentPage ? 'active' : ''}" onclick="goToPage(${p})">${p}</button>`;
+        }
+        btnsHtml += `<button type="button" class="page-btn" onclick="goToPage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>ถัดไป »</button>`;
+        pageBtns.innerHTML = btnsHtml;
+    }
+
+    function renderAll() {
+        if (isLoadingData) return;
+        renderSavedTable();
+
+        const filtered = getFilteredBooks();
+        const pct = parseFloat(document.getElementById('percentInput').value) || 30;
+        document.getElementById('pctLabel').innerText = pct;
+
+        // ---------------------------------------------------------------------
+        // 2. Render หน้ารายการหนังสือ (หน้าละ 30 รายการ + ขึ้นหน้าใหม่, ซ่อนแถวรวมบนหน้าจอ)
+        // ---------------------------------------------------------------------
+        const tbodyBookList = document.getElementById('tbodyBookList');
+        const pageInfo2 = document.getElementById('pageInfo2');
+        const pageBtns2 = document.getElementById('pageBtns2');
+        tbodyBookList.innerHTML = '';
+
+        if (filtered.length > 0) {
+            const totalPages2 = Math.ceil(filtered.length / rowsPerPage2);
+            if (currentPage2 > totalPages2) currentPage2 = totalPages2;
+            if (currentPage2 < 1) currentPage2 = 1;
+
+            const start2 = (currentPage2 - 1) * rowsPerPage2;
+            const end2 = Math.min(start2 + rowsPerPage2, filtered.length);
+            const pageItems2 = filtered.slice(start2, end2);
+
+            pageItems2.forEach((b) => {
+                tbodyBookList.innerHTML += `
+                    <tr>
+                        <td class="text-center"><strong>${b.seqNo}</strong></td>
+                        <td>${escapeHtml(b.title)}</td>
+                        <td>${escapeHtml(b.author)}</td>
+                        <td class="text-center"><span class="badge ${b.status === 'Paid' ? 'paid' : 'pending'}">${b.status}</span></td>
+                        <td class="text-center">${escapeHtml(b.receiptNo || '-')}</td>
+                        <td class="text-center">${formatThaiDate(b.transferDate)}</td>
+                        <td class="text-center">${formatNum(b.total)}</td>
+                    </tr>
+                `;
+            });
+            buildPaginationUI(pageInfo2, pageBtns2, filtered, currentPage2, rowsPerPage2, 'goToPage2');
+        } else {
+            tbodyBookList.innerHTML = `<tr><td colspan="7" class="text-center" style="color:#64748b;">ไม่พบรายการในช่วงวันที่ที่เลือก</td></tr>`;
+            pageInfo2.innerText = '';
+            pageBtns2.innerHTML = '';
+        }
+
+        // ---------------------------------------------------------------------
+        // 3. Render หน้าคิดค่าตอบแทน 30% (หน้าละ 30 รายการ + ขึ้นหน้าใหม่, ซ่อนแถวรวมบนหน้าจอ)
+        // ---------------------------------------------------------------------
+        const tbodyComp = document.getElementById('tbodyComp');
+        const pageInfo3 = document.getElementById('pageInfo3');
+        const pageBtns3 = document.getElementById('pageBtns3');
+        tbodyComp.innerHTML = '';
+
+        if (filtered.length > 0) {
+            const totalPages3 = Math.ceil(filtered.length / rowsPerPage3);
+            if (currentPage3 > totalPages3) currentPage3 = totalPages3;
+            if (currentPage3 < 1) currentPage3 = 1;
+
+            const start3 = (currentPage3 - 1) * rowsPerPage3;
+            const end3 = Math.min(start3 + rowsPerPage3, filtered.length);
+            const pageItems3 = filtered.slice(start3, end3);
+
+            pageItems3.forEach((b) => {
+                const comp = b.total * (pct / 100);
+                tbodyComp.innerHTML += `
+                    <tr>
+                        <td class="text-center"><strong>${b.seqNo}</strong></td>
+                        <td>${escapeHtml(b.title)}</td>
+                        <td>${escapeHtml(b.author)}</td>
+                        <td class="text-center">${b.qty}</td>
+                        <td class="text-center">${formatNum(b.price)}</td>
+                        <td class="text-center">${formatNum(b.total)}</td>
+                        <td class="text-center" style="color:#059669; font-weight:bold;">${formatNum(comp)}</td>
+                    </tr>
+                `;
+            });
+            buildPaginationUI(pageInfo3, pageBtns3, filtered, currentPage3, rowsPerPage3, 'goToPage3');
+        } else {
+            tbodyComp.innerHTML = `<tr><td colspan="7" class="text-center" style="color:#64748b;">ไม่พบรายการในช่วงวันที่ที่เลือก</td></tr>`;
+            pageInfo3.innerText = '';
+            pageBtns3.innerHTML = '';
+        }
+    }
+
+    // =========================================================================
+    // 4. ฟังก์ชันจัดการตัวเลข วันที่ ความปลอดภัยข้อความ และ BahtText
+    // =========================================================================
+    function escapeHtml(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    function splitBahtSatang(num) {
+        const parts = num.toFixed(2).split('.');
+        const baht = parseInt(parts[0]).toLocaleString('en-US');
+        const satang = parts[1] === '00' ? '-' : parts[1];
+        return { baht, satang };
+    }
+
+    function formatNum(num) {
+        return num.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    }
+
+    function formatThaiDate(dateStr) {
+        if (!dateStr) return '-';
+        const [y, m, d] = dateStr.split('-');
+        return `${d}/${m}/${parseInt(y) + 543}`;
+    }
+
+    function formatThaiLongDate(dateStr) {
+        if (!dateStr) return '';
+        const months = ["มกราคม","กุมภาพันธ์","มีนาคม","เมษายน","พฤษภาคม","มิถุนายน","กรกฎาคม","สิงหาคม","กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม"];
+        const [y, m, d] = dateStr.split('-');
+        return `${parseInt(d)} ${months[parseInt(m)-1]} ${parseInt(y) + 543}`;
+    }
+
+    function getDateRangeHeader() {
+        const s = document.getElementById('startDate1').value;
+        const e = document.getElementById('endDate1').value;
+        if (s && e) return `ระหว่างวันที่ ${formatThaiLongDate(s)} - ${formatThaiLongDate(e)}`;
+        if (s) return `ตั้งแต่วันที่ ${formatThaiLongDate(s)}`;
+        if (e) return `ถึงวันที่ ${formatThaiLongDate(e)}`;
+        return '';
+    }
+
+    function thaiBahtText(amount) {
+        if (isNaN(amount) || amount === 0) return "ศูนย์บาทถ้วน";
+        const numText = ["ศูนย์", "หนึ่ง", "สอง", "สาม", "สี่", "ห้า", "หก", "เจ็ด", "แปด", "เก้า"];
+        const unitText = ["", "สิบ", "ร้อย", "พัน", "หมื่น", "แสน", "ล้าน"];
+        const parts = amount.toFixed(2).split(".");
+        let baht = parts[0], satang = parts[1], result = "";
+
+        function convertGroup(str) {
+            let res = "", len = str.length;
+            for (let i = 0; i < len; i++) {
+                let digit = parseInt(str[i]);
+                let pos = len - i - 1;
+                if (digit !== 0) {
+                    if (pos === 1 && digit === 1) res += "สิบ";
+                    else if (pos === 1 && digit === 2) res += "ยี่สิบ";
+                    else if (pos === 0 && digit === 1 && len > 1) res += "เอ็ด";
+                    else res += numText[digit] + unitText[pos];
+                }
+            }
+            return res;
+        }
+        if (parseInt(baht) > 0) {
+            if (baht.length > 6) {
+                let millions = baht.slice(0, baht.length - 6);
+                let rest = baht.slice(baht.length - 6);
+                result += convertGroup(millions) + "ล้าน" + convertGroup(rest) + "บาท";
+            } else {
+                result += convertGroup(baht) + "บาท";
+            }
+        }
+        if (parseInt(satang) === 0) result += "ถ้วน";
+        else result += convertGroup(satang) + "สตางค์";
+        return result;
+    }
+
+    // =========================================================================
+    // 5. พิมพ์ไฟล์ 02: คิดค่าตอบแทน (A4 แนวนอน - เต็มหน้ากระดาษก่อนขึ้นหน้าใหม่ + แสดงยอดรวม)
+    // =========================================================================
+    function printDoc02() {
+        const list = getFilteredBooks();
+        if (list.length === 0) return alert('ไม่มีข้อมูลในช่วงวันที่ที่เลือก');
+
+        const pct = parseFloat(document.getElementById('percentInput').value) || 30;
+        const dateHeader = getDateRangeHeader();
+
+        let rowsHtml = '';
+        let sumAllTotal = 0, sumAllComp = 0;
+
+        list.forEach((item, idx) => {
+            const comp = item.total * (pct / 100);
+            sumAllTotal += item.total;
+            sumAllComp += comp;
+            const pVal = splitBahtSatang(item.price);
+            const tVal = splitBahtSatang(item.total);
+            const cVal = splitBahtSatang(comp);
+
+            rowsHtml += `
+                <tr>
+                    <td class="center">${idx + 1}</td>
+                    <td>${escapeHtml(item.title)}</td>
+                    <td>${escapeHtml(item.author)}</td>
+                    <td class="center">${item.qty}</td>
+                    <td class="center">${pVal.baht}</td>
+                    <td class="center">${pVal.satang}</td>
+                    <td class="center">${tVal.baht}</td>
+                    <td class="center">${tVal.satang}</td>
+                    <td class="center">${pct}%</td>
+                    <td class="center">${cVal.baht}</td>
+                    <td class="center">${cVal.satang}</td>
+                </tr>
+            `;
+        });
+
+        const sumT = splitBahtSatang(sumAllTotal);
+        const sumC = splitBahtSatang(sumAllComp);
+
+        const html = `
+        <!DOCTYPE html>
+        <html lang="th">
+        <head>
+            <meta charset="UTF-8">
+            <title>งานเทคโนโลยีการศึกษา คณะวิศวกรรมศาสตร์ สจล.</title>
+            <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap" rel="stylesheet">
+            <style>
+                @page {
+                    size: A4 landscape;
+                    margin: 12mm 12mm 15mm 12mm;
+                    @top-left { content: ""; }
+                    @top-center { content: ""; }
+                    @top-right { content: ""; }
+                    @bottom-left {
+                        content: "งานเทคโนโลยีการศึกษา คณะวิศวกรรมศาสตร์ สจล.";
+                        font-family: 'Sarabun', sans-serif;
+                        font-size: 11px;
+                        color: #333;
+                    }
+                    @bottom-center { content: ""; }
+                    @bottom-right {
+                        content: "หน้า " counter(page) "/" counter(pages);
+                        font-family: 'Sarabun', sans-serif;
+                        font-size: 11px;
+                        color: #333;
+                    }
+                }
+                * { box-sizing: border-box; }
+                body { font-family: 'Sarabun', sans-serif; font-size: 13.5px; color: #000; margin: 0; padding: 0; }
+                .header { text-align: center; line-height: 1.35; margin-bottom: 12px; }
+                .header h2 { margin: 0; font-size: 18px; }
+                .header p { margin: 2px 0; font-size: 14.5px; }
+                table { width: 100%; border-collapse: collapse; }
+                thead { display: table-header-group; }
+                tr { break-inside: avoid; page-break-inside: avoid; }
+                th, td { border: 1px solid #000; padding: 5px 6px; font-size: 13px; }
+                th { background-color: #f2f2f2; text-align: center; font-weight: bold; }
+                .center { text-align: center; }
+                .right { text-align: right; }
+                .footer-sum { margin-top: 12px; font-weight: bold; font-size: 14.5px; line-height: 1.6; break-inside: avoid; page-break-inside: avoid; }
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <h2>คิดค่าตอบแทนหนังสือ/ตำราเรียน</h2>
+                <p>งานเทคโนโลยีการศึกษา คณะวิศวกรรมศาสตร์</p>
+                <p>สถาบันเทคโนโลยีพระจอมเกล้าเจ้าคุณทหารลาดกระบัง</p>
+                ${dateHeader ? `<p style="font-size:14px; font-weight:bold;">${dateHeader}</p>` : ''}
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th rowspan="2" width="4%">ลำดับ</th>
+                        <th rowspan="2" width="28%">รายชื่อหนังสือ/ตำราเรียน</th>
+                        <th rowspan="2" width="18%">ชื่อผู้แต่ง</th>
+                        <th rowspan="2" width="7%">จำนวน<br>(เล่ม)</th>
+                        <th colspan="2" width="10%">ราคา</th>
+                        <th colspan="2" width="12%">จำนวนเงิน</th>
+                        <th rowspan="2" width="6%">ร้อยละ<br>(%)</th>
+                        <th colspan="2" width="12%">ค่าตอบแทน</th>
+                    </tr>
+                    <tr>
+                        <th width="7%">บาท</th>
+                        <th width="3%">ส.ต.</th>
+                        <th width="9%">บาท</th>
+                        <th width="3%">ส.ต.</th>
+                        <th width="9%">บาท</th>
+                        <th width="3%">ส.ต.</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${rowsHtml}
+                    <tr>
+                        <td colspan="6" class="center"><strong>รวม</strong></td>
+                        <td class="center"><strong>${sumT.baht}</strong></td>
+                        <td class="center"><strong>${sumT.satang}</strong></td>
+                        <td></td>
+                        <td class="center"><strong>${sumC.baht}</strong></td>
+                        <td class="center"><strong>${sumC.satang}</strong></td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="footer-sum">
+                รวมยอดคิดค่าตอบแทน ${formatNum(sumAllComp)} บาท (${thaiBahtText(sumAllComp)})
+            </div>
+            <script>window.onload = function() { window.print(); }<\/script>
+        </body>
+        </html>`;
+
+        openPrintWindow(html);
+    }
+
+    // =========================================================================
+    // 6. พิมพ์ไฟล์ 03: รายการหนังสือ (A4 แนวตั้ง - เต็มหน้ากระดาษก่อนขึ้นหน้าใหม่ + แสดงยอดรวม)
+    // =========================================================================
+    function printDoc03() {
+        const list = getFilteredBooks();
+        if (list.length === 0) return alert('ไม่มีข้อมูลในช่วงวันที่ที่เลือก');
+
+        const dateHeader = getDateRangeHeader();
+        let rowsHtml = '';
+        let sumTotal = 0;
+
+        list.forEach((item, idx) => {
+            sumTotal += item.total;
+            rowsHtml += `
+                <tr>
+                    <td class="center">${idx + 1}</td>
+                    <td>${escapeHtml(item.title)}</td>
+                    <td class="center">${item.status}</td>
+                    <td class="center">${escapeHtml(item.receiptNo || '-')}</td>
+                    <td class="center">${formatThaiDate(item.transferDate)}</td>
+                    <td class="center">${formatNum(item.total)}</td>
+                </tr>
+            `;
+        });
+
+        const html = `
+        <!DOCTYPE html>
+        <html lang="th">
+        <head>
+            <meta charset="UTF-8">
+            <title>งานเทคโนโลยีการศึกษา คณะวิศวกรรมศาสตร์ สจล.</title>
+            <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap" rel="stylesheet">
+            <style>
+                @page {
+                    size: A4 portrait;
+                    margin: 14mm 14mm 16mm 14mm;
+                    @top-left { content: ""; }
+                    @top-center { content: ""; }
+                    @top-right { content: ""; }
+                    @bottom-left {
+                        content: "งานเทคโนโลยีการศึกษา คณะวิศวกรรมศาสตร์ สจล.";
+                        font-family: 'Sarabun', sans-serif;
+                        font-size: 11px;
+                        color: #333;
+                    }
+                    @bottom-center { content: ""; }
+                    @bottom-right {
+                        content: "หน้า " counter(page) "/" counter(pages);
+                        font-family: 'Sarabun', sans-serif;
+                        font-size: 11px;
+                        color: #333;
+                    }
+                }
+                * { box-sizing: border-box; }
+                body { font-family: 'Sarabun', sans-serif; font-size: 14px; color: #000; margin: 0; padding: 0; }
+                .header { text-align: center; line-height: 1.4; margin-bottom: 16px; }
+                .header h2 { margin: 0; font-size: 18px; }
+                .header p { margin: 2px 0; font-size: 15px; }
+                table { width: 100%; border-collapse: collapse; }
+                thead { display: table-header-group; }
+                tr { break-inside: avoid; page-break-inside: avoid; }
+                th, td { border: 1px solid #000; padding: 5px 8px; font-size: 13px; }
+                th { background-color: #f2f2f2; text-align: center; font-weight: bold; }
+                .center { text-align: center; }
+                .right { text-align: right; }
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <h2>รายการหนังสือ/ตำราเรียน</h2>
+                <p>งานเทคโนโลยีการศึกษา คณะวิศวกรรมศาสตร์</p>
+                <p>สถาบันเทคโนโลยีพระจอมเกล้าเจ้าคุณทหารลาดกระบัง</p>
+                ${dateHeader ? `<p style="font-size:14px; font-weight:bold;">${dateHeader}</p>` : ''}
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th width="7%">ลำดับ</th>
+                        <th width="42%">รายการหนังสือ/ตำราเรียน</th>
+                        <th width="10%">สถานะ</th>
+                        <th width="15%">เลขที่ใบเสร็จ</th>
+                        <th width="12%">วันที่โอน</th>
+                        <th width="14%">จำนวน</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${rowsHtml}
+                    <tr>
+                        <td colspan="5" class="center"><strong>รวม</strong></td>
+                        <td class="center"><strong>${formatNum(sumTotal)}</strong></td>
+                    </tr>
+                </tbody>
+            </table>
+            <script>window.onload = function() { window.print(); }<\/script>
+        </body>
+        </html>`;
+
+        openPrintWindow(html);
+    }
+
+    function openPrintWindow(htmlContent) {
+        const win = window.open('', '_blank', 'width=1000,height=700');
+        win.document.open();
+        win.document.write(htmlContent);
+        win.document.close();
+    }
+
+    // เริ่มต้นทำงานเมื่อโหลดหน้าเว็บ
+    calcForm();
+    initAuthSession();
+</script>
+
+</body>
+</html>
