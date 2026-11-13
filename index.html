@@ -96,6 +96,7 @@
         .tabs { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
         .tab-btn { padding: 12px 20px; border: 1px solid #cbd5e1; background: #e2e8f0; color: #334155; font-size: 15px; font-weight: 700; border-radius: 8px; cursor: pointer; transition: 0.2s; }
         .tab-btn.active { background: #2563eb; color: #fff; border-color: #2563eb; box-shadow: 0 2px 6px rgba(37,99,235,0.3); }
+        .mobile-only { display: none; }
 
         .card { background: #fff; padding: 24px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 24px; transition: border 0.2s; }
         .card.editing-mode { border: 2px solid #f59e0b; background-color: #fffbeb; }
@@ -114,15 +115,16 @@
         
         /* Filter Bar */
         .filter-bar { background: #f8fafc; border: 1px solid #cbd5e1; padding: 15px; border-radius: 8px; display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-end; margin-bottom: 16px; }
+        .filter-action-right { margin-left: auto; }
 
         /* Action Buttons */
-        .btn-sm { padding: 6px 12px; font-size: 13px; border: none; border-radius: 6px; cursor: pointer; background: #e2e8f0; color: #1e293b; font-weight: 600; transition: 0.15s; }
+        .btn-sm { padding: 6px 12px; font-size: 13px; border: none; border-radius: 6px; cursor: pointer; background: #e2e8f0; color: #1e293b; font-weight: 600; transition: 0.15s; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
         .btn-sm:hover { background: #cbd5e1; }
-        .btn { padding: 9px 16px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 14px; transition: 0.15s; }
+        .btn { padding: 9px 16px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 14px; transition: 0.15s; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
         .btn:disabled { opacity: 0.6; cursor: not-allowed; }
         .btn-login { background: #0f172a; color: white; width: 100%; padding: 11px; font-size: 15px; }
         .btn-login:hover:not(:disabled) { background: #1e293b; }
-        .btn-logout { background: transparent; border: 1px solid #64748b; color: #e2e8f0; padding: 6px 14px; font-size: 13px; }
+        .btn-logout { background: transparent; border: 1px solid #64748b; color: #e2e8f0; padding: 6px 14px; font-size: 13px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
         .btn-logout:hover { background: rgba(255,255,255,0.1); border-color: #94a3b8; color: #fff; }
         .btn-save { background: #2563eb; color: white; margin-top: 16px; }
         .btn-save:hover:not(:disabled) { background: #1d4ed8; }
@@ -187,6 +189,225 @@
         /* Loading Spinner Overlay */
         .loading-text { color: #2563eb; font-weight: 600; font-size: 14px; }
         .hidden { display: none !important; }
+
+        /* ========================================================================= */
+        /* ปรับปรุงการแสดงผลเฉพาะในมือถือ (Mobile Responsive Only)                    */
+        /* ========================================================================= */
+        @media (max-width: 768px) {
+            .desktop-only { display: none !important; }
+            .mobile-only { display: inline-flex !important; align-items: center; justify-content: center; }
+
+            /* Topbar: จัดให้อยู่แถวเดียวกับโลโก้และชื่อระบบ */
+            .topbar {
+                flex-wrap: nowrap;
+                padding: 12px 14px;
+                gap: 8px;
+            }
+            .brand-wrap {
+                gap: 10px;
+                min-width: 0;
+                flex: 1;
+            }
+            .brand-logo-box {
+                width: 38px;
+                height: 38px;
+            }
+            .brand-title {
+                font-size: 17px;
+            }
+            .brand-subtitle {
+                font-size: 11px;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            /* ซ่อนข้อมูล "✅ textbook (textbook@kmitl.ac.th)" ในมือถือเท่านั้น */
+            #roleLabel {
+                display: none !important;
+            }
+
+            /* เปลี่ยนปุ่ม "ออกจากระบบ" เป็นรูปแบบ Icon ในมือถือเท่านั้น */
+            .auth-box {
+                flex-shrink: 0;
+            }
+            .btn-logout {
+                padding: 8px;
+                width: 36px;
+                height: 36px;
+                border-radius: 8px;
+            }
+
+            /* แถบเมนู 3 ปุ่มอยู่แถวเดียวกัน พร้อมข้อความย่อเฉพาะในมือถือ */
+            .container {
+                margin: 16px auto;
+                padding: 0 12px;
+            }
+            .card {
+                padding: 16px 14px;
+            }
+            .card h2 {
+                font-size: 17px;
+            }
+            .card-header-flex h2 {
+                font-size: 17px;
+            }
+            .tabs {
+                flex-wrap: nowrap;
+                gap: 6px;
+                margin-bottom: 16px;
+            }
+            .tab-btn {
+                flex: 1;
+                padding: 10px 4px;
+                font-size: 12px;
+                text-align: center;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                border-radius: 8px;
+            }
+
+            /* ซ่อนปุ่มรีเฟรชข้อมูล, คอลัมน์ที่ไม่ต้องการในมือถือ */
+            .mobile-hide-btn,
+            .mobile-hide-col {
+                display: none !important;
+            }
+
+            /* --------------------------------------------------------------------- */
+            /* 1. หน้า "📝 กรอกข้อมูล" - ตารางส่วนที่ 2 (ซ่อนวันที่โอนด้วย)               */
+            /* --------------------------------------------------------------------- */
+            .saved-table {
+                table-layout: fixed;
+                width: 100%;
+                margin-top: 8px;
+            }
+            .saved-table th,
+            .saved-table td {
+                padding: 8px 4px;
+                font-size: 12px;
+                word-wrap: break-word;
+                overflow-wrap: break-word;
+            }
+            .saved-table th:nth-child(1),
+            .saved-table td:nth-child(1) { width: 11%; } /* ลำดับ */
+            .saved-table th:nth-child(2),
+            .saved-table td:nth-child(2) { width: 47%; line-height: 1.35; } /* รายการ */
+            .saved-table th:nth-child(6),
+            .saved-table td:nth-child(6) { width: 11%; } /* ใบเสร็จ */
+            .saved-table th:nth-child(7),
+            .saved-table td:nth-child(7) { width: 11%; } /* สลิป */
+            .saved-table th:nth-child(8),
+            .saved-table td:nth-child(8) { width: 20%; } /* จัดการ */
+
+            .saved-table .svg-btn {
+                width: 27px;
+                height: 27px;
+                border-radius: 6px;
+            }
+            .saved-table .svg-btn svg {
+                width: 14px;
+                height: 14px;
+            }
+            .saved-table .action-group {
+                gap: 4px;
+            }
+
+            /* --------------------------------------------------------------------- */
+            /* 2 & 3. Filter Bar ในหน้า "📋 รายการหนังสือ" และ "💰 ค่าตอบแทน"           */
+            /* จัดให้อยู่แถวเดียวกัน: ตั้งแต่วันที่ | ถึงวันที่ | แสดงทั้งหมด(ไอคอน) | พิมพ์(ไอคอน) */
+            /* --------------------------------------------------------------------- */
+            .filter-bar {
+                flex-wrap: nowrap;
+                padding: 10px 8px;
+                gap: 6px;
+                align-items: flex-end;
+            }
+            .filter-bar .form-group {
+                flex: 1;
+                min-width: 0;
+            }
+            .filter-bar label {
+                font-size: 11px;
+                margin-bottom: 3px;
+                white-space: nowrap;
+            }
+            .filter-bar input[type="date"] {
+                width: 100%;
+                min-width: 0;
+                padding: 6px 4px;
+                font-size: 11px;
+                height: 34px;
+            }
+            .filter-action-right {
+                margin-left: 0;
+                flex-shrink: 0;
+            }
+            .filter-icon-btn {
+                width: 34px !important;
+                height: 34px !important;
+                padding: 0 !important;
+                flex-shrink: 0;
+                border-radius: 6px;
+            }
+
+            /* --------------------------------------------------------------------- */
+            /* 2. ตารางหน้า "📋 รายการหนังสือ" (แสดง: ลำดับ, รายการ, สถานะ, จำนวนเงิน)  */
+            /* --------------------------------------------------------------------- */
+            .booklist-table {
+                table-layout: fixed;
+                width: 100%;
+                margin-top: 8px;
+            }
+            .booklist-table th,
+            .booklist-table td {
+                padding: 8px 4px;
+                font-size: 12px;
+                word-wrap: break-word;
+                overflow-wrap: break-word;
+            }
+            .booklist-table th:nth-child(1),
+            .booklist-table td:nth-child(1) { width: 12%; } /* ลำดับ */
+            .booklist-table th:nth-child(2),
+            .booklist-table td:nth-child(2) { width: 48%; line-height: 1.35; } /* รายการ */
+            .booklist-table th:nth-child(4),
+            .booklist-table td:nth-child(4) { width: 17%; } /* สถานะ */
+            .booklist-table th:nth-child(7),
+            .booklist-table td:nth-child(7) { width: 23%; font-size: 11.5px; } /* จำนวนเงิน */
+
+            .booklist-table .badge {
+                padding: 2px 5px;
+                font-size: 10.5px;
+            }
+
+            /* --------------------------------------------------------------------- */
+            /* 3. ตารางหน้า "💰 ค่าตอบแทน" (แสดง: ลำดับ, รายการ, เล่ม, ราคา, เงิน, ค่าตอบแทน) */
+            /* --------------------------------------------------------------------- */
+            .comp-table {
+                table-layout: fixed;
+                width: 100%;
+                margin-top: 8px;
+            }
+            .comp-table th,
+            .comp-table td {
+                padding: 7px 2px;
+                font-size: 11px;
+                word-wrap: break-word;
+                overflow-wrap: break-word;
+            }
+            .comp-table th:nth-child(1),
+            .comp-table td:nth-child(1) { width: 9%; } /* ลำดับ */
+            .comp-table th:nth-child(2),
+            .comp-table td:nth-child(2) { width: 32%; line-height: 1.3; text-align: left; padding-left: 4px; } /* รายชื่อหนังสือ */
+            .comp-table th:nth-child(4),
+            .comp-table td:nth-child(4) { width: 10%; } /* จำนวน */
+            .comp-table th:nth-child(5),
+            .comp-table td:nth-child(5) { width: 15%; } /* ราคา */
+            .comp-table th:nth-child(6),
+            .comp-table td:nth-child(6) { width: 17%; } /* จำนวนเงิน */
+            .comp-table th:nth-child(7),
+            .comp-table td:nth-child(7) { width: 17%; } /* ค่าตอบแทน */
+        }
     </style>
 </head>
 <body>
@@ -239,7 +460,16 @@
         </div>
         <div class="auth-box">
             <span id="roleLabel"></span>
-            <button id="logoutBtn" class="btn btn-logout" onclick="logout()">ออกจากระบบ</button>
+            <button id="logoutBtn" class="btn btn-logout" onclick="logout()" title="ออกจากระบบ">
+                <span class="desktop-only">ออกจากระบบ</span>
+                <span class="mobile-only" aria-label="ออกจากระบบ">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                        <polyline points="16 17 21 12 16 7"></polyline>
+                        <line x1="21" y1="12" x2="9" y2="12"></line>
+                    </svg>
+                </span>
+            </button>
         </div>
     </div>
 
@@ -247,9 +477,18 @@
 
         <!-- แถบเมนู 3 หน้าหลัก -->
         <div class="tabs">
-            <button class="tab-btn active" id="tab1" onclick="switchTab(1)">📝 กรอกข้อมูลรายการ</button>
-            <button class="tab-btn" id="tab2" onclick="switchTab(2)">📋 สรุปรายการหนังสือ/ตำราเรียน</button>
-            <button class="tab-btn" id="tab3" onclick="switchTab(3)">💰 สรุปค่าตอบแทนอาจารย์</button>
+            <button class="tab-btn active" id="tab1" onclick="switchTab(1)">
+                <span class="desktop-only">📝 กรอกข้อมูลรายการ</span>
+                <span class="mobile-only">📝 กรอกข้อมูล</span>
+            </button>
+            <button class="tab-btn" id="tab2" onclick="switchTab(2)">
+                <span class="desktop-only">📋 สรุปรายการหนังสือ/ตำราเรียน</span>
+                <span class="mobile-only">📋 รายการหนังสือ</span>
+            </button>
+            <button class="tab-btn" id="tab3" onclick="switchTab(3)">
+                <span class="desktop-only">💰 สรุปค่าตอบแทนอาจารย์</span>
+                <span class="mobile-only">💰 ค่าตอบแทน</span>
+            </button>
         </div>
 
         <!-- ===================================================================== -->
@@ -322,17 +561,20 @@
             <div class="card">
                 <div class="card-header-flex">
                     <h2>🗂️ ส่วนที่ 2: รายการบันทึกข้อมูลและหลักฐาน</h2>
-                    <button type="button" class="btn-sm" onclick="fetchBooksFromDB(true)">🔄 รีเฟรชข้อมูล</button>
+                    <button type="button" class="btn-sm mobile-hide-btn" onclick="fetchBooksFromDB(true)">🔄 รีเฟรชข้อมูล</button>
                 </div>
                 <div class="table-wrap">
-                    <table>
+                    <table class="saved-table">
                         <thead>
                             <tr>
                                 <th width="7%">ลำดับ</th>
-                                <th width="34%">รายการหนังสือ/ตำราเรียน</th>
-                                <th width="10%">สถานะ</th>
-                                <th width="12%">เลขที่ใบเสร็จ</th>
-                                <th width="11%">วันที่โอน</th>
+                                <th width="34%">
+                                    <span class="desktop-only">รายการหนังสือ/ตำราเรียน</span>
+                                    <span class="mobile-only">รายการ</span>
+                                </th>
+                                <th width="10%" class="mobile-hide-col">สถานะ</th>
+                                <th width="12%" class="mobile-hide-col">เลขที่ใบเสร็จ</th>
+                                <th width="11%" class="mobile-hide-col">วันที่โอน</th>
                                 <th width="8%">ใบเสร็จ</th>
                                 <th width="8%">สลิป</th>
                                 <th width="10%">จัดการ</th>
@@ -366,22 +608,42 @@
                         <label>ถึงวันที่</label>
                         <input type="date" id="endDate1" onchange="syncDates(1)">
                     </div>
-                    <button type="button" class="btn-sm" style="height: 36px;" onclick="clearDates()">แสดงทั้งหมด</button>
-                    <div style="margin-left: auto;">
-                        <button type="button" class="btn btn-p03" onclick="printDoc03()">🖨️ สรุปรายการ</button>
+                    <button type="button" class="btn-sm filter-icon-btn" style="height: 36px;" onclick="clearDates()" title="แสดงทั้งหมด">
+                        <span class="desktop-only">แสดงทั้งหมด</span>
+                        <span class="mobile-only" aria-label="แสดงทั้งหมด">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                                <path d="M3 3v5h5"></path>
+                            </svg>
+                        </span>
+                    </button>
+                    <div class="filter-action-right">
+                        <button type="button" class="btn btn-p03 filter-icon-btn" onclick="printDoc03()" title="สรุปรายการ">
+                            <span class="desktop-only">🖨️ สรุปรายการ</span>
+                            <span class="mobile-only" aria-label="สรุปรายการ">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="6 9 6 2 18 2 18 9"></polyline>
+                                    <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+                                    <rect x="6" y="14" width="12" height="8"></rect>
+                                </svg>
+                            </span>
+                        </button>
                     </div>
                 </div>
 
                 <div class="table-wrap">
-                    <table>
+                    <table class="booklist-table">
                         <thead>
                             <tr>
                                 <th width="6%">ลำดับ</th>
-                                <th width="36%">รายการหนังสือ/ตำราเรียน</th>
-                                <th width="18%">ชื่อผู้แต่ง</th>
+                                <th width="36%">
+                                    <span class="desktop-only">รายการหนังสือ/ตำราเรียน</span>
+                                    <span class="mobile-only">รายการ</span>
+                                </th>
+                                <th width="18%" class="mobile-hide-col">ชื่อผู้แต่ง</th>
                                 <th width="9%">สถานะ</th>
-                                <th width="11%">เลขที่ใบเสร็จ</th>
-                                <th width="10%">วันที่โอน</th>
+                                <th width="11%" class="mobile-hide-col">เลขที่ใบเสร็จ</th>
+                                <th width="10%" class="mobile-hide-col">วันที่โอน</th>
                                 <th width="10%">จำนวนเงิน</th>
                             </tr>
                         </thead>
@@ -413,27 +675,53 @@
                         <label>ถึงวันที่</label>
                         <input type="date" id="endDate2" onchange="syncDates(2)">
                     </div>
-                    <div class="form-group" style="width: 120px;">
+                    <div class="form-group mobile-hide-col" style="width: 120px;">
                         <label>ร้อยละ (%)</label>
                         <input type="number" id="percentInput" value="30" min="0" max="100" oninput="renderAll()">
                     </div>
-                    <button type="button" class="btn-sm" style="height: 36px;" onclick="clearDates()">แสดงทั้งหมด</button>
-                    <div style="margin-left: auto;">
-                        <button type="button" class="btn btn-p02" onclick="printDoc02()">🖨️ สรุปค่าตอบแทน</button>
+                    <button type="button" class="btn-sm filter-icon-btn" style="height: 36px;" onclick="clearDates()" title="แสดงทั้งหมด">
+                        <span class="desktop-only">แสดงทั้งหมด</span>
+                        <span class="mobile-only" aria-label="แสดงทั้งหมด">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                                <path d="M3 3v5h5"></path>
+                            </svg>
+                        </span>
+                    </button>
+                    <div class="filter-action-right">
+                        <button type="button" class="btn btn-p02 filter-icon-btn" onclick="printDoc02()" title="สรุปค่าตอบแทน">
+                            <span class="desktop-only">🖨️ สรุปค่าตอบแทน</span>
+                            <span class="mobile-only" aria-label="สรุปค่าตอบแทน">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="6 9 6 2 18 2 18 9"></polyline>
+                                    <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+                                    <rect x="6" y="14" width="12" height="8"></rect>
+                                </svg>
+                            </span>
+                        </button>
                     </div>
                 </div>
 
                 <div class="table-wrap">
-                    <table>
+                    <table class="comp-table">
                         <thead>
                             <tr>
                                 <th width="5%">ลำดับ</th>
-                                <th width="32%">รายชื่อหนังสือ/ตำราเรียน</th>
-                                <th width="20%">ชื่อผู้แต่ง</th>
-                                <th width="8%">จำนวน (เล่ม)</th>
+                                <th width="32%">
+                                    <span class="desktop-only">รายชื่อหนังสือ/ตำราเรียน</span>
+                                    <span class="mobile-only">รายการ</span>
+                                </th>
+                                <th width="20%" class="mobile-hide-col">ชื่อผู้แต่ง</th>
+                                <th width="8%">
+                                    <span class="desktop-only">จำนวน (เล่ม)</span>
+                                    <span class="mobile-only">เล่ม</span>
+                                </th>
                                 <th width="10%">ราคา</th>
                                 <th width="12%">จำนวนเงิน</th>
-                                <th width="13%">ค่าตอบแทน<br>(<span id="pctLabel">30</span>%)</th>
+                                <th width="13%">
+                                    <span class="desktop-only">ค่าตอบแทน<br>(<span id="pctLabel">30</span>%)</span>
+                                    <span class="mobile-only">ค่าตอบแทน</span>
+                                </th>
                             </tr>
                         </thead>
                         <tbody id="tbodyComp"></tbody>
@@ -964,9 +1252,9 @@
                 <tr>
                     <td class="text-center"><strong>${b.seqNo}</strong></td>
                     <td><strong>${escapeHtml(b.title)}</strong></td>
-                    <td class="text-center"><span class="badge ${b.status === 'Paid' ? 'paid' : 'pending'}">${b.status}</span></td>
-                    <td class="text-center">${escapeHtml(b.receiptNo || '-')}</td>
-                    <td class="text-center">${formatThaiDate(b.transferDate)}</td>
+                    <td class="text-center mobile-hide-col"><span class="badge ${b.status === 'Paid' ? 'paid' : 'pending'}">${b.status}</span></td>
+                    <td class="text-center mobile-hide-col">${escapeHtml(b.receiptNo || '-')}</td>
+                    <td class="text-center mobile-hide-col">${formatThaiDate(b.transferDate)}</td>
                     <td class="text-center">${receiptCell}</td>
                     <td class="text-center">${slipCell}</td>
                     <td class="text-center">${actionCell}</td>
@@ -1014,10 +1302,10 @@
                     <tr>
                         <td class="text-center"><strong>${b.seqNo}</strong></td>
                         <td>${escapeHtml(b.title)}</td>
-                        <td>${escapeHtml(b.author)}</td>
+                        <td class="mobile-hide-col">${escapeHtml(b.author)}</td>
                         <td class="text-center"><span class="badge ${b.status === 'Paid' ? 'paid' : 'pending'}">${b.status}</span></td>
-                        <td class="text-center">${escapeHtml(b.receiptNo || '-')}</td>
-                        <td class="text-center">${formatThaiDate(b.transferDate)}</td>
+                        <td class="text-center mobile-hide-col">${escapeHtml(b.receiptNo || '-')}</td>
+                        <td class="text-center mobile-hide-col">${formatThaiDate(b.transferDate)}</td>
                         <td class="text-center">${formatNum(b.total)}</td>
                     </tr>
                 `;
@@ -1052,7 +1340,7 @@
                     <tr>
                         <td class="text-center"><strong>${b.seqNo}</strong></td>
                         <td>${escapeHtml(b.title)}</td>
-                        <td>${escapeHtml(b.author)}</td>
+                        <td class="mobile-hide-col">${escapeHtml(b.author)}</td>
                         <td class="text-center">${b.qty}</td>
                         <td class="text-center">${formatNum(b.price)}</td>
                         <td class="text-center">${formatNum(b.total)}</td>
