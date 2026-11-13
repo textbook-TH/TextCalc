@@ -315,40 +315,51 @@
 
             /* --------------------------------------------------------------------- */
             /* 2 & 3. Filter Bar ในหน้า "📋 รายการหนังสือ" และ "💰 ค่าตอบแทน"           */
-            /* จัดให้อยู่แถวเดียวกัน: ตั้งแต่วันที่ | ถึงวันที่ | แสดงทั้งหมด(ไอคอน) | พิมพ์(ไอคอน) */
+            /* จัดเป็น Grid 2 คอลัมน์สมดุล 2 แถว:                                      */
+            /* แถวที่ 1: ตั้งแต่วันที่ (50%) | ถึงวันที่ (50%)                          */
+            /* แถวที่ 2: ปุ่ม "แสดงทั้งหมด" (50%) | ปุ่ม "🖨️ สรุปรายการ / ค่าตอบแทน" (50%) */
             /* --------------------------------------------------------------------- */
             .filter-bar {
-                flex-wrap: nowrap;
-                padding: 10px 8px;
-                gap: 6px;
-                align-items: flex-end;
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 10px;
+                padding: 12px;
+                align-items: end;
             }
             .filter-bar .form-group {
-                flex: 1;
                 min-width: 0;
+                width: 100%;
             }
             .filter-bar label {
-                font-size: 11px;
-                margin-bottom: 3px;
+                font-size: 12px;
+                margin-bottom: 4px;
                 white-space: nowrap;
             }
             .filter-bar input[type="date"] {
+                -webkit-appearance: none;
+                appearance: none;
+                display: block;
                 width: 100%;
+                max-width: 100%;
                 min-width: 0;
-                padding: 6px 4px;
-                font-size: 11px;
-                height: 34px;
+                height: 38px;
+                padding: 6px 8px;
+                font-size: 13px;
+                line-height: 1.4;
+                color: #1e293b;
+                background-color: #ffffff;
             }
             .filter-action-right {
                 margin-left: 0;
-                flex-shrink: 0;
+                width: 100%;
             }
-            .filter-icon-btn {
-                width: 34px !important;
-                height: 34px !important;
-                padding: 0 !important;
-                flex-shrink: 0;
+            .filter-balanced-btn {
+                width: 100% !important;
+                height: 38px !important;
+                padding: 0 10px !important;
+                font-size: 13px !important;
                 border-radius: 6px;
+                white-space: nowrap;
             }
 
             /* --------------------------------------------------------------------- */
@@ -396,11 +407,11 @@
                 overflow-wrap: break-word;
             }
             .comp-table th:nth-child(1),
-            .comp-table td:nth-child(1) { width: 9%; } /* ลำดับ */
+            .comp-table td:nth-child(1) { width: 11%; } /* ลำดับ */
             .comp-table th:nth-child(2),
-            .comp-table td:nth-child(2) { width: 32%; line-height: 1.3; text-align: left; padding-left: 4px; } /* รายชื่อหนังสือ */
+            .comp-table td:nth-child(2) { width: 30%; line-height: 1.3; text-align: left; padding-left: 4px; } /* รายการ */
             .comp-table th:nth-child(4),
-            .comp-table td:nth-child(4) { width: 10%; } /* จำนวน */
+            .comp-table td:nth-child(4) { width: 10%; } /* เล่ม */
             .comp-table th:nth-child(5),
             .comp-table td:nth-child(5) { width: 15%; } /* ราคา */
             .comp-table th:nth-child(6),
@@ -608,26 +619,9 @@
                         <label>ถึงวันที่</label>
                         <input type="date" id="endDate1" onchange="syncDates(1)">
                     </div>
-                    <button type="button" class="btn-sm filter-icon-btn" style="height: 36px;" onclick="clearDates()" title="แสดงทั้งหมด">
-                        <span class="desktop-only">แสดงทั้งหมด</span>
-                        <span class="mobile-only" aria-label="แสดงทั้งหมด">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
-                                <path d="M3 3v5h5"></path>
-                            </svg>
-                        </span>
-                    </button>
+                    <button type="button" class="btn-sm filter-balanced-btn" style="height: 36px;" onclick="clearDates()">แสดงทั้งหมด</button>
                     <div class="filter-action-right">
-                        <button type="button" class="btn btn-p03 filter-icon-btn" onclick="printDoc03()" title="สรุปรายการ">
-                            <span class="desktop-only">🖨️ สรุปรายการ</span>
-                            <span class="mobile-only" aria-label="สรุปรายการ">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <polyline points="6 9 6 2 18 2 18 9"></polyline>
-                                    <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
-                                    <rect x="6" y="14" width="12" height="8"></rect>
-                                </svg>
-                            </span>
-                        </button>
+                        <button type="button" class="btn btn-p03 filter-balanced-btn" onclick="printDoc03()">🖨️ สรุปรายการ</button>
                     </div>
                 </div>
 
@@ -679,26 +673,9 @@
                         <label>ร้อยละ (%)</label>
                         <input type="number" id="percentInput" value="30" min="0" max="100" oninput="renderAll()">
                     </div>
-                    <button type="button" class="btn-sm filter-icon-btn" style="height: 36px;" onclick="clearDates()" title="แสดงทั้งหมด">
-                        <span class="desktop-only">แสดงทั้งหมด</span>
-                        <span class="mobile-only" aria-label="แสดงทั้งหมด">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
-                                <path d="M3 3v5h5"></path>
-                            </svg>
-                        </span>
-                    </button>
+                    <button type="button" class="btn-sm filter-balanced-btn" style="height: 36px;" onclick="clearDates()">แสดงทั้งหมด</button>
                     <div class="filter-action-right">
-                        <button type="button" class="btn btn-p02 filter-icon-btn" onclick="printDoc02()" title="สรุปค่าตอบแทน">
-                            <span class="desktop-only">🖨️ สรุปค่าตอบแทน</span>
-                            <span class="mobile-only" aria-label="สรุปค่าตอบแทน">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <polyline points="6 9 6 2 18 2 18 9"></polyline>
-                                    <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
-                                    <rect x="6" y="14" width="12" height="8"></rect>
-                                </svg>
-                            </span>
-                        </button>
+                        <button type="button" class="btn btn-p02 filter-balanced-btn" onclick="printDoc02()">🖨️ สรุปค่าตอบแทน</button>
                     </div>
                 </div>
 
