@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
     <title>TextCalc - ระบบจัดเก็บรายการหนังสือและคิดค่าตอบแทน</title>
     <link rel="icon" type="image/png" href="logo.png">
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
@@ -796,11 +798,12 @@
 
     </div>
 
-<!-- แถบ Footer ด้านล่างเว็บโทนสีเดียวกับ Topbar -->
+    <!-- แถบ Footer ด้านล่างเว็บโทนสีเดียวกับ Topbar -->
     <footer class="footer">
         © 2026 งานเทคโนโลยีการศึกษา คณะวิศวกรรมศาสตร์<br>
         สถาบันเทคโนโลยีพระจอมเกล้าเจ้าคุณทหารลาดกระบัง
     </footer>
+</div>
 
 <script>
     // =========================================================================
@@ -868,8 +871,8 @@
         document.getElementById('loginModal').style.display = 'none';
         document.getElementById('mainApp').classList.remove('hidden');
 
-        const displayName = profile.fullName ? `${profile.fullName} (${profile.email})` : profile.email;
-        const roleTag = (profile.role || 'admin').toUpperCase();
+        const displayName = profile.fullName ? `${escapeHtml(profile.fullName)} (${escapeHtml(profile.email)})` : escapeHtml(profile.email);
+        const roleTag = escapeHtml((profile.role || 'admin').toUpperCase());
         document.getElementById('roleLabel').innerHTML = `✅ <strong>${displayName}</strong> <span class="role-badge">${roleTag}</span>`;
 
         await fetchBooksFromDB();
@@ -950,6 +953,18 @@
         document.getElementById('loginModal').style.display = 'flex';
     }
 
+    // ตรวจสอบความถูกต้องของ Session ก่อนทำรายการเปลี่ยนแปลงข้อมูล (Write Operations)
+    async function ensureActiveAdminSession() {
+        if (!currentAdmin) return false;
+        const { data: { session }, error } = await supabaseClient.auth.getSession();
+        if (error || !session || !session.user) {
+            alert('⚠️ เซสชันการเข้าสู่ระบบหมดอายุ กรุณาเข้าสู่ระบบใหม่อีกครั้ง');
+            await logout();
+            return false;
+        }
+        return true;
+    }
+
     // =========================================================================
     // 2. รายการข้อมูลหนังสือ/ตำราเรียน (ดึงจากตาราง book_compensations)
     // =========================================================================
@@ -963,22 +978,38 @@
     const rowsPerPage2 = 30;
     const rowsPerPage3 = 30;
 
-    // ดึงข้อมูลทั้งหมดจาก Supabase ตาราง book_compensations
+    // ดึงข้อมูลทั้งหมดจาก Supabase ตาราง book_compensations (รองรับมากกว่า 1,000 แถว)
     async function fetchBooksFromDB(showToast = false) {
         if (!currentAdmin) return;
         isLoadingData = true;
         renderLoadingState();
 
         try {
-            const { data, error } = await supabaseClient
-                .from('book_compensations')
-                .select('id, title, author, qty, price, total, status, receiptNo, transferDate, receiptLink, slipLink, createdBy, createdAt')
-                .order('id', { ascending: true });
+            const batchSize = 1000;
+            let from = 0;
+            let allRows = [];
 
-            if (error) throw error;
+            while (true) {
+                const { data, error } = await supabaseClient
+                    .from('book_compensations')
+                    .select('id, title, author, qty, price, total, status, receiptNo, transferDate, receiptLink, slipLink, createdBy, createdAt')
+                    .order('id', { ascending: true })
+                    .range(from, from + batchSize - 1);
+
+                if (error) throw error;
+
+                if (data && data.length > 0) {
+                    allRows = allRows.concat(data);
+                }
+
+                if (!data || data.length < batchSize) {
+                    break;
+                }
+                from += batchSize;
+            }
 
             // แปลงชนิดข้อมูล numeric ให้เป็น Number เพื่อความแม่นยำในการคำนวณ
-            books = (data || []).map(row => ({
+            books = allRows.map(row => ({
                 ...row,
                 qty: Number(row.qty) || 0,
                 price: Number(row.price) || 0,
@@ -1056,12 +1087,24 @@
 
     async function saveBook(e) {
         e.preventDefault();
-        if (!currentAdmin) return;
+        if (!(await ensureActiveAdminSession())) return;
 
         const q = parseInt(document.getElementById('qty').value, 10) || 0;
         const p = parseFloat(document.getElementById('price').value) || 0;
         const editIdVal = document.getElementById('editId').value;
         const submitBtn = document.getElementById('submitBtn');
+
+        const rawReceiptLink = document.getElementById('receiptLink').value.trim();
+        const rawSlipLink = document.getElementById('slipLink').value.trim();
+
+        if (rawReceiptLink && !sanitizeUrl(rawReceiptLink)) {
+            alert('❌ ลิงก์ใบเสร็จรับเงินต้องขึ้นต้นด้วย http:// หรือ https:// เท่านั้น');
+            return;
+        }
+        if (rawSlipLink && !sanitizeUrl(rawSlipLink)) {
+            alert('❌ ลิงก์สลิปการโอนเงินต้องขึ้นต้นด้วย http:// หรือ https:// เท่านั้น');
+            return;
+        }
 
         // หมายเหตุ: ไม่ส่งคอลัมน์ total เพราะใน PostgreSQL กำหนดเป็น GENERATED ALWAYS AS (qty * price)
         const payload = {
@@ -1072,8 +1115,8 @@
             status: document.getElementById('status').value,
             receiptNo: document.getElementById('receiptNo').value.trim() || null,
             transferDate: document.getElementById('transferDate').value,
-            receiptLink: document.getElementById('receiptLink').value.trim() || null,
-            slipLink: document.getElementById('slipLink').value.trim() || null
+            receiptLink: rawReceiptLink || null,
+            slipLink: rawSlipLink || null
         };
 
         submitBtn.disabled = true;
@@ -1164,7 +1207,7 @@
     }
 
     async function delBook(id) {
-        if (!currentAdmin) return;
+        if (!(await ensureActiveAdminSession())) return;
         if (!confirm('ยืนยันการลบรายการนี้ออกจากฐานข้อมูลอย่างถาวร?')) return;
 
         try {
@@ -1175,7 +1218,8 @@
 
             if (error) throw error;
 
-            if (document.getElementById('editId').value == id) {
+            const currentEditId = document.getElementById('editId').value;
+            if (currentEditId !== '' && String(currentEditId) === String(id)) {
                 cancelEdit();
             }
 
@@ -1291,18 +1335,22 @@
         const pageItems = descList.slice(startIdx, endIdx);
 
         pageItems.forEach((b) => {
-            const receiptCell = b.receiptLink
-                ? `<a href="${b.receiptLink}" target="_blank" rel="noopener noreferrer" class="svg-btn svg-receipt" title="ดาวน์โหลดใบเสร็จรับเงิน">${SVG_RECEIPT_ICON}</a>`
+            const safeReceiptUrl = sanitizeUrl(b.receiptLink);
+            const safeSlipUrl = sanitizeUrl(b.slipLink);
+            const safeStatus = escapeHtml(b.status);
+
+            const receiptCell = safeReceiptUrl
+                ? `<a href="${safeReceiptUrl}" target="_blank" rel="noopener noreferrer" class="svg-btn svg-receipt" title="ดาวน์โหลดใบเสร็จรับเงิน">${SVG_RECEIPT_ICON}</a>`
                 : `<span style="color:#94a3b8;">-</span>`;
 
-            const slipCell = b.slipLink
-                ? `<a href="${b.slipLink}" target="_blank" rel="noopener noreferrer" class="svg-btn svg-slip" title="ดาวน์โหลดสลิปการโอนเงิน">${SVG_SLIP_ICON}</a>`
+            const slipCell = safeSlipUrl
+                ? `<a href="${safeSlipUrl}" target="_blank" rel="noopener noreferrer" class="svg-btn svg-slip" title="ดาวน์โหลดสลิปการโอนเงิน">${SVG_SLIP_ICON}</a>`
                 : `<span style="color:#94a3b8;">-</span>`;
 
             const actionCell = `
                 <div class="action-group">
-                    <button type="button" class="svg-btn svg-edit" title="แก้ไขรายการ" onclick="editBook(${b.id})">${SVG_EDIT_ICON}</button>
-                    <button type="button" class="svg-btn svg-del" title="ลบรายการ" onclick="delBook(${b.id})">${SVG_DEL_ICON}</button>
+                    <button type="button" class="svg-btn svg-edit" title="แก้ไขรายการ" onclick="editBook(${Number(b.id)})">${SVG_EDIT_ICON}</button>
+                    <button type="button" class="svg-btn svg-del" title="ลบรายการ" onclick="delBook(${Number(b.id)})">${SVG_DEL_ICON}</button>
                 </div>
             `;
 
@@ -1310,7 +1358,7 @@
                 <tr>
                     <td class="text-center">${b.seqNo}</td>
                     <td>${escapeHtml(b.title)}</td>
-                    <td class="text-center mobile-hide-col"><span class="badge ${b.status === 'Paid' ? 'paid' : 'pending'}">${b.status}</span></td>
+                    <td class="text-center mobile-hide-col"><span class="badge ${b.status === 'Paid' ? 'paid' : 'pending'}">${safeStatus}</span></td>
                     <td class="text-center mobile-hide-col">${escapeHtml(b.receiptNo || '-')}</td>
                     <td class="text-center mobile-hide-col">${formatThaiDate(b.transferDate)}</td>
                     <td class="text-center">${receiptCell}</td>
@@ -1361,7 +1409,7 @@
                         <td class="text-center">${b.seqNo}</td>
                         <td>${escapeHtml(b.title)}</td>
                         <td class="mobile-hide-col">${escapeHtml(b.author)}</td>
-                        <td class="text-center"><span class="badge ${b.status === 'Paid' ? 'paid' : 'pending'}">${b.status}</span></td>
+                        <td class="text-center"><span class="badge ${b.status === 'Paid' ? 'paid' : 'pending'}">${escapeHtml(b.status)}</span></td>
                         <td class="text-center mobile-hide-col">${escapeHtml(b.receiptNo || '-')}</td>
                         <td class="text-center mobile-hide-col">${formatThaiDate(b.transferDate)}</td>
                         <td class="text-center col-bold">${formatNum(b.total)}</td>
@@ -1415,10 +1463,10 @@
     }
 
     // =========================================================================
-    // 4. ฟังก์ชันจัดการตัวเลข วันที่ ความปลอดภัยข้อความ และ BahtText
+    // 4. ฟังก์ชันจัดการตัวเลข วันที่ ความปลอดภัยข้อความ/URL และ BahtText
     // =========================================================================
     function escapeHtml(str) {
-        if (!str) return '';
+        if (str === null || str === undefined) return '';
         return String(str)
             .replace(/&/g, '&amp;')
             .replace(/</g, '&lt;')
@@ -1427,9 +1475,23 @@
             .replace(/'/g, '&#039;');
     }
 
+    function sanitizeUrl(url) {
+        if (!url || typeof url !== 'string') return '';
+        const trimmed = url.trim();
+        try {
+            const parsed = new URL(trimmed);
+            if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+                return escapeHtml(parsed.href);
+            }
+            return '';
+        } catch (e) {
+            return '';
+        }
+    }
+
     function splitBahtSatang(num) {
         const parts = num.toFixed(2).split('.');
-        const baht = parseInt(parts[0]).toLocaleString('en-US');
+        const baht = parseInt(parts[0], 10).toLocaleString('en-US');
         const satang = parts[1] === '00' ? '-' : parts[1];
         return { baht, satang };
     }
@@ -1441,14 +1503,14 @@
     function formatThaiDate(dateStr) {
         if (!dateStr) return '-';
         const [y, m, d] = dateStr.split('-');
-        return `${d}/${m}/${parseInt(y) + 543}`;
+        return `${d}/${m}/${parseInt(y, 10) + 543}`;
     }
 
     function formatThaiLongDate(dateStr) {
         if (!dateStr) return '';
         const months = ["มกราคม","กุมภาพันธ์","มีนาคม","เมษายน","พฤษภาคม","มิถุนายน","กรกฎาคม","สิงหาคม","กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม"];
         const [y, m, d] = dateStr.split('-');
-        return `${parseInt(d)} ${months[parseInt(m)-1]} ${parseInt(y) + 543}`;
+        return `${parseInt(d, 10)} ${months[parseInt(m, 10)-1]} ${parseInt(y, 10) + 543}`;
     }
 
     function getDateRangeHeader() {
@@ -1470,7 +1532,7 @@
         function convertGroup(str) {
             let res = "", len = str.length;
             for (let i = 0; i < len; i++) {
-                let digit = parseInt(str[i]);
+                let digit = parseInt(str[i], 10);
                 let pos = len - i - 1;
                 if (digit !== 0) {
                     if (pos === 1 && digit === 1) res += "สิบ";
@@ -1481,7 +1543,7 @@
             }
             return res;
         }
-        if (parseInt(baht) > 0) {
+        if (parseInt(baht, 10) > 0) {
             if (baht.length > 6) {
                 let millions = baht.slice(0, baht.length - 6);
                 let rest = baht.slice(baht.length - 6);
@@ -1490,7 +1552,7 @@
                 result += convertGroup(baht) + "บาท";
             }
         }
-        if (parseInt(satang) === 0) result += "ถ้วน";
+        if (parseInt(satang, 10) === 0) result += "ถ้วน";
         else result += convertGroup(satang) + "สตางค์";
         return result;
     }
@@ -1584,7 +1646,7 @@
                 <h2>คิดค่าตอบแทนหนังสือ/ตำราเรียน</h2>
                 <p>งานเทคโนโลยีการศึกษา คณะวิศวกรรมศาสตร์</p>
                 <p>สถาบันเทคโนโลยีพระจอมเกล้าเจ้าคุณทหารลาดกระบัง</p>
-                ${dateHeader ? `<p style="font-size:14px; font-weight:bold;">${dateHeader}</p>` : ''}
+                ${dateHeader ? `<p style="font-size:14px; font-weight:bold;">${escapeHtml(dateHeader)}</p>` : ''}
             </div>
             <table>
                 <thead>
@@ -1646,7 +1708,7 @@
                 <tr>
                     <td class="center">${idx + 1}</td>
                     <td>${escapeHtml(item.title)}</td>
-                    <td class="center">${item.status}</td>
+                    <td class="center">${escapeHtml(item.status)}</td>
                     <td class="center">${escapeHtml(item.receiptNo || '-')}</td>
                     <td class="center">${formatThaiDate(item.transferDate)}</td>
                     <td class="center">${formatNum(item.total)}</td>
@@ -1701,7 +1763,7 @@
                 <h2>รายการหนังสือ/ตำราเรียน</h2>
                 <p>งานเทคโนโลยีการศึกษา คณะวิศวกรรมศาสตร์</p>
                 <p>สถาบันเทคโนโลยีพระจอมเกล้าเจ้าคุณทหารลาดกระบัง</p>
-                ${dateHeader ? `<p style="font-size:14px; font-weight:bold;">${dateHeader}</p>` : ''}
+                ${dateHeader ? `<p style="font-size:14px; font-weight:bold;">${escapeHtml(dateHeader)}</p>` : ''}
             </div>
             <table>
                 <thead>
@@ -1731,6 +1793,10 @@
 
     function openPrintWindow(htmlContent) {
         const win = window.open('', '_blank', 'width=1000,height=700');
+        if (!win) {
+            alert('⚠️ เบราว์เซอร์บล็อกหน้าต่างพิมพ์เอกสาร กรุณาอนุญาต Pop-up สำหรับเว็บไซต์นี้');
+            return;
+        }
         win.document.open();
         win.document.write(htmlContent);
         win.document.close();
